@@ -181,12 +181,12 @@ def crystalline_obstruction(f, p, precision, per_cyclic=False):
         res['rank obs|Ti'] = b_local
         res['dim Ti'] = [fac.degree()*exp for fac, exp in tate_factor]
         res['sum rank  obs|Ti'] = sum(b_local)
-        res['bound'] = rank - sum(b_local)
+        upper_bound = rank - sum(b_local)
     else:
         b, b_val = bounds
-        res['bound'] = rank - b
+        upper_bound = rank - b
     res['rank obs'] = b
-    return res['bound'], res
+    return upper_bound, res
 
 
 
