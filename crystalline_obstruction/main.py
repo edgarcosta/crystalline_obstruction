@@ -177,7 +177,7 @@ def crystalline_obstruction(f, p, precision, per_cyclic=False):
     res['p'] = p
     res['rank T(X_Fpbar)'] = rank
     if per_cyclic:
-        b, b_val, b_local, b_val_local = bound
+        b, b_val, b_local, b_val_local = bounds
         res['rank obs|Ti'] = b_local
         res['dim Ti'] = [fac.degree()*exp for fac, exp in tate_factor]
         res['sum rank  obs|Ti'] = sum(b_local)
