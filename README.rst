@@ -10,9 +10,12 @@ For more details see:
 - "Explicit computation of the obstruction to lifting Tate classes from positive characteristic" (under preparation) by Edgar Costa and Emre Can Sertoz.
 
 To compute a p-adic approximation for the Frobenius matrix we rely on the libraries controlledreduction_, and hypellfrob_.
-At the moment we support:
+At the moment we support
+
 - quartic or quintic surfaces (controlledreduction_)
+
 - Jacobians of quartic curves (controlledreduction_)
+
 - Jacobians hyperelliptic curves with a Weierstrass point over Qp (hypellfrob_)
 
 .. _controlledreduction: https://github.com/edgarcosta/controlledreduction
