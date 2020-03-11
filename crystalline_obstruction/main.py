@@ -169,7 +169,7 @@ def crystalline_obstruction(f, p, precision, per_cyclic=False):
     max_degree = max(elt.degree() for elt, _ in tate_factor)
     if max_degree > precision - 1:
         warnings.warn('Precision is very likely too low to correctly compute the Tate classes at this prime')
-    bound = upper_bound_tate(cp, frob_matrix, precision, per_cyclic=per_cyclic)
+    bounds = upper_bound_tate(cp, frob_matrix, precision, per_cyclic=per_cyclic)
     res = {}
     res['precision'] = precision
     res['p'] = p
@@ -179,10 +179,12 @@ def crystalline_obstruction(f, p, precision, per_cyclic=False):
         res['rank obs|Ti'] = b_local
         res['dim Ti'] = [fac.degree()*exp for fac, exp in tate_factor]
         res['sum rank  obs|Ti'] = sum(b_local)
+        res['bound'] = rank - sum(b_local)
     else:
-        b, b_val = bound
+        b, b_val = bounds
+        res['bound'] = rank - b
     res['rank obs'] = b
-    return res
+    return res['bound'], res
 
 
 
