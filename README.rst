@@ -38,14 +38,14 @@ Examples
 
 ::
 
-    sage: from crystalline_obstruction import improve_bound_rank
-    sage: improve_bound_rank(f=ZZ['x,y,z,w']('y^4-x^3*z+y*z^3+z*w^3+w^4'),
+    sage: from crystalline_obstruction import crystalline_obstruction
+    sage: crystalline_obstruction(f=ZZ['x,y,z,w']('y^4-x^3*z+y*z^3+z*w^3+w^4'),
     ....:                               p=31,
     ....:                               precision=3)
 
     {'precision': 3, 'p': 31, 'rank T(X_Fpbar)': 4, 'rank obs': 0}
     sage:
-    sage: improve_bound_rank(f=ZZ['x,y,z,w']('y^4-x^3*z+y*z^3+z*w^3+w^4'),
+    sage: crystalline_obstruction(f=ZZ['x,y,z,w']('y^4-x^3*z+y*z^3+z*w^3+w^4'),
     ....:                               p=89,
     ....:                               precision=3,
     ....:                               per_cyclic=True)
@@ -56,11 +56,11 @@ Examples
      'dim Ti': [1, 1, 1, 1, 1, 4],
      'sum rank  obs|Ti': 6,
      'rank obs': 1}
-    sage: improve_bound_rank(f=ZZ['x,y,z']('-x*y^3 + x^3*z + x^2*y*z + x^2*z^2 - x*y*z^2 + y^2*z^2 - x*z^3'),
+    sage: crystalline_obstruction(f=ZZ['x,y,z']('-x*y^3 + x^3*z + x^2*y*z + x^2*z^2 - x*y*z^2 + y^2*z^2 - x*z^3'),
     ....:                               p=31,
     ....:                               precision=3)
     {'precision': 3, 'p': 31, 'rank T(X_Fpbar)': 9, 'rank obs': 3}
-    sage: improve_bound_rank(f=ZZ['x,y,z']('-x*y^3 + x^3*z + x^2*y*z + x^2*z^2 - x*y*z^2 + y^2*z^2 - x*z^3'),
+    sage: crystalline_obstruction(f=ZZ['x,y,z']('-x*y^3 + x^3*z + x^2*y*z + x^2*z^2 - x*y*z^2 + y^2*z^2 - x*z^3'),
     ....:                               p=31,
     ....:                               precision=3,
     ....:                               per_cyclic=True)
@@ -71,7 +71,7 @@ Examples
      'dim Ti': [3, 3, 3],
      'sum rank  obs|Ti': 6,
      'rank obs': 3}
-    sage: improve_bound_rank(f=[ZZ['x']('2*x^6+3*x^5+5*x^4+6*x^3+4*x^2+x'),
+    sage: crystalline_obstruction(f=[ZZ['x']('2*x^6+3*x^5+5*x^4+6*x^3+4*x^2+x'),
     ....:                                  ZZ['x']('x^4+x^3+x')],
     ....:                               p=59,
     ....:                               precision=3,
@@ -84,7 +84,7 @@ Examples
    'sum rank  obs|Ti': 5,
    'rank obs': 3}
     sage: #Example 5.1
-    ....: bound_rank.improve_bound_rank(f=ZZ['x']('x^5 - 2*x^4 + 2*x^3 - 4*x^2 + 3*x - 1'),
+    ....: bound_rank.crystalline_obstruction(f=ZZ['x']('x^5 - 2*x^4 + 2*x^3 - 4*x^2 + 3*x - 1'),
     ....:                               p=31,
     ....:                               precision=3,
     ....:                               per_cyclic=True)
@@ -96,7 +96,7 @@ Examples
      'sum rank  obs|Ti': 1,
      'rank obs': 1}
     sage: #Example 5.2, prec should be 100, but takes some time
-    ....: bound_rank.improve_bound_rank(f=ZZ['x']('x^5 - 2*x^4 + 7*x^3 - 5*x^2 + 8*x + 3'),
+    ....: bound_rank.crystalline_obstruction(f=ZZ['x']('x^5 - 2*x^4 + 7*x^3 - 5*x^2 + 8*x + 3'),
     ....:                               p=4999,
     ....:                               precision=20,
     ....:                               per_cyclic=True)
@@ -108,7 +108,7 @@ Examples
      'sum rank  obs|Ti': 0,
      'rank obs': 0}
     sage: #Example 5.3
-    ....: bound_rank.improve_bound_rank(f=ZZ['x,y,z']('x*y^3 + x^3*z - x*y^2*z + x^2*z^2 + y^2*z^2 - y*z^3'),
+    ....: bound_rank.crystalline_obstruction(f=ZZ['x,y,z']('x*y^3 + x^3*z - x*y^2*z + x^2*z^2 + y^2*z^2 - y*z^3'),
     ....:                               p=31,
     ....:                               precision=3,
     ....:                               per_cyclic=True)

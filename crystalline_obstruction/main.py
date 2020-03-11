@@ -148,7 +148,7 @@ def compute_frob_matrix_and_cp_H2(f, p, prec):
     return prec, cp, frob_matrix, shift
 
 
-def improve_bound_rank(f, p, precision, per_cyclic=False):
+def crystalline_obstruction(f, p, precision, per_cyclic=False):
     """
     Input:
         - f, or fs defining the curve or surface

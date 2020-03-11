@@ -1,2 +1,2 @@
-from .main import improve_bound_rank
-assert improve_bound_rank
+from .main import crystalline_obstruction
+assert crystalline_obstruction
