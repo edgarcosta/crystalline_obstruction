@@ -27,6 +27,7 @@ def from_H1_to_H2(cp1, F1):
     # deal with Frob approximation
     wedge_basis = [(i,j) for i in range(F1.nrows()) for j in range(i+1, F1.nrows())]
     M = FiniteRankFreeModule(F1.base_ring(), F1.nrows())
+    M.basis('e')
     F1e = [M(elt) for elt in F1.columns()]
     F2e = [F1e[i].wedge(F1e[j]) for i, j in wedge_basis]
     F2 = matrix([[elt.comp()[i,j] for elt in F2e] for i,j in wedge_basis])
@@ -36,6 +37,7 @@ def from_H1_to_H2(cp1, F1):
     F1_cp = companion_matrix(cprev)
     assert F1.nrows() == F1_cp.nrows()
     M = FiniteRankFreeModule(F1_cp.base_ring(), F1.nrows())
+    M.basis('e')
     F1e_cp = [M(elt) for elt in F1_cp.columns()]
     F2e_cp = [F1e_cp[i].wedge(F1e_cp[j]) for i, j in wedge_basis]
     F2_cp = matrix([[elt.comp()[i,j] for elt in F2e_cp] for i,j in wedge_basis])
