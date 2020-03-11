@@ -7,7 +7,7 @@ This gives rigorous upper bounds on the middle geometric Picard number of a give
 
 For more details see:
 
-- Explicit computation of the obstruction to lifting Tate classes from positive characteristic (under preparation) by Edgar Costa and Emre Can Sertoz.
+- "Explicit computation of the obstruction to lifting Tate classes from positive characteristic" (under preparation) by Edgar Costa and Emre Can Sertoz.
 
 To compute a p-adic approximation for the Frobenius matrix we rely on the libraries controlledreduction_, and hypellfrob_.
 At the moment we support:
