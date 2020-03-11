@@ -3,9 +3,9 @@ crystalline_obstruction
 =============
 
 This package computes an approximation the crystalline obstruction map on its space of Tate classes.
-With this gives rigorous upper bounds on the middle geometric Picard number of a given projective hypersurface or the geometric Picard number of Jacobian variety.
+This gives rigorous upper bounds on the middle geometric Picard number of a given projective hypersurface or the geometric Picard number of Jacobian variety.
 
-For more details see:
+For more details see ???
 
 To compute a p-adic approximation for the Frobenius matrix we rely on the libraries controlledreduction_, and hypellfrob_.
 At the moment we support:
