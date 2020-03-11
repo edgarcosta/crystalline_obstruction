@@ -12,7 +12,7 @@ For more details see:
 To compute a p-adic approximation for the Frobenius matrix we rely on the libraries controlledreduction_, and hypellfrob_.
 At the moment we support
 
-- quartic or quintic surfaces (controlledreduction_)
+- quartic and quintic surfaces (controlledreduction_)
 
 - Jacobians of quartic curves (controlledreduction_)
 
