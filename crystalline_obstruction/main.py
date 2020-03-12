@@ -12,6 +12,7 @@ import multiprocessing
 ncpus = multiprocessing.cpu_count()
 import warnings
 from sage.schemes.hyperelliptic_curves.hypellfrob import hypellfrob
+from sage.misc.cachefunc import cached_function
 
 
 def from_H1_to_H2(cp1, F1):
@@ -150,7 +151,7 @@ def compute_frob_matrix_and_cp_H2(f, p, prec):
     return prec, cp, frob_matrix, shift
 
 
-def crystalline_obstruction(f, p, precision, per_cyclic=False):
+def crystalline_obstruction(f, p, precision, over_Qp=True, **kwargs):
     """
     Input:
         - f, or fs defining the curve or surface
@@ -165,27 +166,34 @@ def crystalline_obstruction(f, p, precision, per_cyclic=False):
     Note: if given a univariate polynomial (or a pair), we will try to change the model over Qpbar,
     in order to work with an odd and monic model
     """
-    precision, cp, frob_matrix, shift = compute_frob_matrix_and_cp_H2(f, p, precision)
+    if 'cp' in kwargs and 'frob_matrix' in kwargs:
+        cp = kwargs['cp']
+        frob_matrix = kwargs['frob_matrix']
+        shift = kwargs.get('shift', 0)
+    else:
+        precision, cp, frob_matrix, shift = compute_frob_matrix_and_cp_H2(f, p, precision)
     rank, k, cyc_factor = rank_fieldextension(cp, shift)
-    tate_factor = tate_factor_Zp(cyc_factor)
+    tate_factor = tate_factor_Zp(cyc_factor.expand())
     max_degree = max(elt.degree() for elt, _ in tate_factor)
     if max_degree > precision - 1:
         warnings.warn('Precision is very likely too low to correctly compute the Tate classes at this prime')
-    bounds = upper_bound_tate(cp, frob_matrix, precision, per_cyclic=per_cyclic)
+    dim_Ti, obsi, obsi_val, dim_Ki, dim_Ki_val = upper_bound_tate(cp, frob_matrix, precision, over_Qp=over_Qp)
     res = {}
     res['precision'] = precision
     res['p'] = p
     res['rank T(X_Fpbar)'] = rank
-    if per_cyclic:
-        b, b_val, b_local, b_val_local = bounds
-        res['rank obs|Ti'] = b_local
-        res['dim Ti'] = [fac.degree()*exp for fac, exp in tate_factor]
-        res['sum rank  obs|Ti'] = sum(b_local)
-        upper_bound = rank - sum(b_local)
+    if over_Qp:
+        if shift > 0:
+            dim_Ki = [[shift]] + dim_Ki
+            dim_Ti = [[shift]] + dim_Ti
+        upper_bound = rank - (sum(sum(dim_Ti, [])) - sum(sum(dim_Ki, [])))
     else:
-        b, b_val = bounds
-        upper_bound = rank - b
-    res['rank obs'] = b
+        if shift > 0:
+            dim_Ki = [shift] + dim_Ki
+            dim_Ti = [shift] + dim_Ti
+        upper_bound = rank - (sum(dim_Ti) - sum(dim_Ki))
+    res['dim Ti'] = dim_Ti
+    res['dim Ki'] = dim_Ki
     return upper_bound, res
 
 
@@ -195,8 +203,9 @@ def crystalline_obstruction(f, p, precision, per_cyclic=False):
 
 def rank_fieldextension(frob_polynomial, shift=0):
     """
-    Return rank, degree of field extension, and the characteristic polynomial
-    of Frobenius on Tate classes.
+    Return rank, degree of field extension, and the factorization
+    of characteristic polynomial, into twisted cyclotomic factors,
+    of the Frobenius action on Tate classes factorized
 
     Input::
         - frob_polynomial, Frobenius polynomial for H^2
@@ -206,14 +215,14 @@ def rank_fieldextension(frob_polynomial, shift=0):
     p = frob_polynomial.list()[-1].prime_factors()[0]
     rank = shift
     k = 1
-    cyc_factor = 1
+    cyc_factorization = []
     for fac, exp in frob_polynomial.factor():
         ki = fac(fac.variables()[0]/p).is_cyclotomic(certificate=True)
         if ki:
             k = lcm(k, ki)
-            cyc_factor *= fac**exp
+            cyc_factorization.append((fac, exp))
             rank += fac.degree() * exp
-    return rank, k, cyc_factor
+    return rank, k, Factorization(cyc_factorization)
 
 def tate_factor_Zp(cyc_factor):
     """
@@ -232,7 +241,7 @@ def tate_factor_Zp(cyc_factor):
     return res
 
 
-def upper_bound_tate(cp, frob_matrix, precision, per_cyclic=False):
+def upper_bound_tate(cp, frob_matrix, precision, over_Qp=True):
     """
     Return a upper bound for Tate classes over characteristic 0
     TODO: improove documentation
@@ -246,15 +255,15 @@ def upper_bound_tate(cp, frob_matrix, precision, per_cyclic=False):
     frob_matrix = matrix(OK, frob_matrix).change_ring(K)
 
     # get the p-adic eigenvalues
-    _, _, cyc_factor = rank_fieldextension(cp)
-    tate_factor = tate_factor_Zp(cyc_factor)
-    dim_Tn = sum(fac.degree()*exp for fac, exp in tate_factor)
+    _, _, cyc_factorization = rank_fieldextension(cp)
 
     # hacky
     #print(val)
     val = [min(elt.valuation() for elt in col) for col in frob_matrix.columns()]
     projection_cols = frob_matrix.ncols() - val.index(0)
     assert set(val[-projection_cols:]) == {0}
+    # P1 = | zero matrix |
+    #      | Identity    |
     P1 = zero_matrix(frob_matrix.ncols()-projection_cols, projection_cols).stack(identity_matrix(projection_cols))
     # for the purpose of computing the rank on a projection
     # we want to focus on the first columns
@@ -262,42 +271,80 @@ def upper_bound_tate(cp, frob_matrix, precision, per_cyclic=False):
     P1.reverse_rows_and_columns()
     frob_matrix.reverse_rows_and_columns()
 
-    M = matrix(K, 0, frob_matrix.ncols())
-    b_local = []
-    bval_local = []
-    for fac, exp in tate_factor:
-        #print(fac.change_ring(R), exp)
-        Mlocal = fac(frob_matrix)
-        kerlocal = Mlocal.right_kernel_matrix()
-        assert kerlocal.nrows() == fac.degree()*exp
-        M = M.stack(kerlocal)
-        if per_cyclic:
-            obs = kerlocal*P1
-            b = obs.rank()
-            if b == min(obs.ncols(), obs.nrows()):
-                b_val = +Infinity
-            elif b == 0:
-                # avoiding bug for 0 matrices
-                b_val = min([elt.valuation() for elt in obs.list()])
-            else:
-                b_val = min([elt.valuation() for elt in obs.minors(b + 1)])
-            b_local.append(b)
-            bval_local.append(b_val)
-        #print(kerlocal)
-    assert dim_Tn == M.nrows()
+    @cached_function
+    def frob_power(k):
+        if k == 0:
+            return identity_matrix(frob_matrix.ncols())
+        elif k == 1:
+            return frob_matrix
+        else:
+            return frob_matrix * frob_power(k-1)
+
+    def minors_valuation(M, rank):
+        if rank == min(M.ncols(), M.nrows()):
+            return +Infinity
+        elif rank == 0:
+            # avoiding bug for 0 matrices
+            return min([elt.valuation() for elt in M.list()])
+        else:
+            return min([elt.valuation() for elt in M.minors(rank + 1)])
 
 
-    obs = M*P1
-    b = obs.rank()
-    #print(obs.transpose())
-    if b == min(obs.ncols(), obs.nrows()):
-        b_val = +Infinity
-    elif b == 0:
-        # avoiding bug for 0 matrices
-        b_val = min([elt.valuation() for elt in obs.list()])
-    else:
-        b_val = min([elt.valuation() for elt in obs.minors(b + 1)])
-    if per_cyclic:
-        return b, b_val, b_local, bval_local
-    else:
-        return b, b_val
+    T = matrix(K, 0, frob_matrix.ncols())
+    dim_Ti = []
+    obsi = []
+    obsi_val = []
+    dim_Ki =[]
+    dim_Ki_val = []
+    for cyc_fac, cyc_exp in cyc_factorization:
+        Ti = matrix(K, 0, frob_matrix.ncols())
+        obsij = []
+        obsij_val = []
+        dim_Tij = []
+        dim_Kij = []
+        dim_Kij_val = []
+        for fac, exp in tate_factor_Zp(cyc_fac):
+            # the rows of Tij are a basis for Tij
+            Tij = fac(frob_matrix).right_kernel_matrix()
+            dim_Tij.append(Tij.nrows())
+            assert Tij.nrows() == fac.degree()*exp*cyc_exp
+            # Lij is given by the kernel of the obs_map
+            # dim Lij = dim Tij - rank(Tij*P1)
+            obs_map = Tij*P1
+            rank_obs_ij = obs_map.rank()
+            obsij.append(rank_obs_ij)
+            obsij_val.append(minors_valuation(obs_map, rank_obs_ij))
+            Kijmatrix = matrix(K, Tij.nrows(), 0)
+            for ell in range(fac.degree()):
+                Kijmatrix = Kijmatrix.augment(Tij*frob_power(ell).transpose()*P1)
+            # Kij = right_kernel(K) subspace of Lij that is invariant under Frob
+            Krank = Kijmatrix.rank()
+            dim_Kij.append(Tij.nrows() - Krank)
+            dim_Kij_val.append(minors_valuation(Kijmatrix, Krank))
+            assert dim_Kij[-1] % fac.degree()  == 0
+
+            Ti = Ti.stack(Tij)
+        T = T.stack(Ti)
+        if over_Qp:
+            dim_Ti.append(dim_Tij)
+            obsi.append(obsij)
+            obsi_val.append(obsij_val)
+            dim_Ki.append(dim_Kij)
+            dim_Ki_val.append(dim_Kij_val)
+        else:
+            obs_map = Ti*P1
+            dim_Ti.append(Ti.nrows())
+            rank_obs_i = obs_map.rank()
+            obsi.append(rank_obs_i)
+            obsi_val.append(minors_valuation(obs_map, rank_obs_i))
+            Kimatrix = matrix(K, Ti.nrows(), 0)
+            for ell in range(fac.degree()):
+                Kimatrix = Kimatrix.augment(Ti*frob_power(ell).transpose()*P1)
+            # Ki = right_kernel(K) subspace of Li that is invariant under Frob
+            Krank = Kimatrix.rank()
+            dim_Ki.append(Tij.nrows() - Krank)
+            dim_Ki_val.append(minors_valuation(Kimatrix, Krank))
+            assert dim_Ki[-1] % fac.degree()  == 0
+    assert T.nrows() == sum(fac.degree()*exp for fac, exp in cyc_factorization)
+
+    return dim_Ti, obsi, obsi_val, dim_Ki, dim_Ki_val
