@@ -32,7 +32,7 @@ sage -pip install --user --upgrade git+https://github.com/edgarcosta/crystalline
 
 ## Examples
 
-### Jacobians hyperelliptic curves with a Weierstrass point over Qp
+### Jacobians of hyperelliptic curves with a Weierstrass point over Qp
 
 ```
 sage: from crystalline_obstruction import crystalline_obstruction
