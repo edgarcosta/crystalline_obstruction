@@ -20,7 +20,7 @@ At the moment we support:
 
 
 
-## Install
+# Installing
 
 ```
 sage -pip install --upgrade git+https://github.com/edgarcosta/crystalline_obstruction.git@master#egg=crystalline_obstruction
@@ -30,9 +30,9 @@ If you don't have permissions to install it system wide, please add the flag ``-
 sage -pip install --user --upgrade git+https://github.com/edgarcosta/crystalline_obstruction.git@master#egg=crystalline_obstruction
 ```
 
-## Examples
+# Examples
 
-### Jacobians of hyperelliptic curves with a Weierstrass point over Qp
+## Jacobians of hyperelliptic curves with a Weierstrass point over Qp
 
 ```
 sage: from crystalline_obstruction import crystalline_obstruction
@@ -70,7 +70,7 @@ sage: crystalline_obstruction(f=ZZ['x,y']('(2*x^6+3*x^5+5*x^4+6*x^3+4*x^2+x) -y*
   'dim Li': [1, 2]})
 ```
 
-### Quartic Plane curves
+## Quartic Plane curves
 ```
 sage: #Example 5.3
 sage: crystalline_obstruction(f=ZZ['x,y,z']('x*y^3 + x^3*z - x*y^2*z + x^2*z^2 + y^2*z^2 - y*z^3'),
@@ -96,7 +96,7 @@ sage: crystalline_obstruction(f=ZZ['x,y,z']('x^3*z + x^2*y*z + x^2*z^2 - x*y^3 -
   'dim Li': [1, 2]})
 ```
 
-### Quartic surfaces
+## Quartic surfaces
 ```
 sage: # Example 5.5
 sage: crystalline_obstruction(ZZ['x,y,z,w']("x^4 + y^4 + z^4 + w^4 + 101^3*x*y*z*w"),
@@ -146,9 +146,7 @@ sage: crystalline_obstruction(ZZ['x,y,z,w']("x^4 + 2*y^4 + 2*y*z^3 + 3*z^4 - 2*x
 
 
 
-============
-Citing this code
-============
+# Citing this code
 
 Please cite the following preprint if this code has been helpful in your research:
 
