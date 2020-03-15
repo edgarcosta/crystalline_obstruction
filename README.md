@@ -86,7 +86,7 @@ sage: crystalline_obstruction(f, p=31, precision=3)
   'dim Ti': [3],
   'dim Li': [1]})
 ```
-# Product of 3 elliptic curves over x^3 - 3*x - 1
+### Product of 3 elliptic curves over x^3 - 3*x - 1
 ```
 sage: f=ZZ['x,y,z']('x^3*z + x^2*y*z + x^2*z^2 - x*y^3 - x*y*z^2 - x*z^3 + y^2*z^2'),
 sage: crystalline_obstruction(f=f, p=31, precision=5)
