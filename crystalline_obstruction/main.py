@@ -1,7 +1,9 @@
+from sage.all import ZZ # cannot seem to import this from the right place
 from sage.functions.other import binomial
 from sage.rings.padics.factory import Qp, Zp, ZpCA
 from sage.rings.finite_rings.finite_field_constructor import GF
 from sage.rings.infinity import Infinity
+from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
 from sage.arith.functions import lcm
 from sage.matrix.special import zero_matrix, identity_matrix, matrix, companion_matrix
 from sage.tensor.modules.finite_rank_free_module import FiniteRankFreeModule
@@ -55,7 +57,7 @@ def find_monic_and_odd_model(f, p):
         # try to find weirstrass point
         roots = f.roots()
         if len(roots) == 0:
-            raise NotImplementedError("HyperellipticCurve doesn't have a weirstrass point over Qp")
+            raise NotImplementedError("Hyperelliptic curve doesn't have a weirstrass point over Qp")
         root = roots[0][0]
         x = f.variables()[0]
         f = f(x + root).reverse()
@@ -82,13 +84,19 @@ def compute_frob_matrix_and_cp_H2(f, p, prec):
     in order to work with an odd and monic model
     """
     K = Qp(p, prec=prec+10)
-    if isinstance(f, tuple) or isinstance(f, list):
-        # assume is hyperelliptic
-        # and convert to weirstrass eqn
-        fn, hn = f
-        f = 4*fn + hn**2
     Rf = f.parent()
-    if len(Rf.gens()) == 1:
+    R = f.base_ring()
+    if len(Rf.gens()) == 2:
+        if min(f.degrees()) != 2:
+            raise NotImplementedError("Affine curves must be hyperelliptic")
+        x, y = f.variables()
+        if f.degree(x) == 2:
+            f = f.substitute(x=y, y=x)
+        # Get Weierstrass equation
+        # y^2 + a*y  + b == 0
+        b, a, _ = map(R['x'], R['x']['y'](f).monic())
+        # y^2 + a*y  + b == 0 --> (2y + a)^2 = a^2 - 4 b
+        f = a**2 - 4*b
         f = find_monic_and_odd_model(f.change_ring(K), p)
         cp1 = HyperellipticCurve(f.change_ring(GF(p))).frobenius_polynomial().reverse()
         F1 = hypellfrob(p, prec, f.lift())
@@ -151,7 +159,7 @@ def compute_frob_matrix_and_cp_H2(f, p, prec):
     return prec, cp, frob_matrix, shift
 
 
-def crystalline_obstruction(f, p, precision, over_Qp=True, **kwargs):
+def crystalline_obstruction(f, p, precision, over_Qp=False, **kwargs):
     """
     Input:
         - f, or fs defining the curve or surface
@@ -172,28 +180,37 @@ def crystalline_obstruction(f, p, precision, over_Qp=True, **kwargs):
         shift = kwargs.get('shift', 0)
     else:
         precision, cp, frob_matrix, shift = compute_frob_matrix_and_cp_H2(f, p, precision)
+    Rt = PolynomialRing(ZZ, 't')
+    t = Rt.gens()[0]
+    cp = Rt(cp)
     rank, k, cyc_factor = rank_fieldextension(cp, shift)
     tate_factor = tate_factor_Zp(cyc_factor.expand())
     max_degree = max(elt.degree() for elt, _ in tate_factor)
     if max_degree > precision - 1:
         warnings.warn('Precision is very likely too low to correctly compute the Tate classes at this prime')
-    dim_Ti, obsi, obsi_val, dim_Ki, dim_Ki_val = upper_bound_tate(cp, frob_matrix, precision, over_Qp=over_Qp)
+    factor_i, dim_Ti, obsi, obsi_val, dim_Li, dim_Li_val = upper_bound_tate(cp, frob_matrix, precision, over_Qp=over_Qp)
     res = {}
     res['precision'] = precision
     res['p'] = p
     res['rank T(X_Fpbar)'] = rank
+    res['factors'] = []
+    if shift > 0:
+        res['factors'].append((t - 1, 1))
+    # normalize the cyclotomic factors
+    for factor, exp in factor_i:
+        res['factors'].append((factor(t/p) , exp))
     if over_Qp:
         if shift > 0:
-            dim_Ki = [[shift]] + dim_Ki
+            dim_Li = [[shift]] + dim_Li
             dim_Ti = [[shift]] + dim_Ti
-        upper_bound = rank - (sum(sum(dim_Ti, [])) - sum(sum(dim_Ki, [])))
+        upper_bound = rank - (sum(sum(dim_Ti, [])) - sum(sum(dim_Li, [])))
     else:
         if shift > 0:
-            dim_Ki = [shift] + dim_Ki
+            dim_Li = [shift] + dim_Li
             dim_Ti = [shift] + dim_Ti
-        upper_bound = rank - (sum(dim_Ti) - sum(dim_Ki))
+        upper_bound = rank - (sum(dim_Ti) - sum(dim_Li))
     res['dim Ti'] = dim_Ti
-    res['dim Ki'] = dim_Ki
+    res['dim Li'] = dim_Li
     return upper_bound, res
 
 
@@ -241,7 +258,7 @@ def tate_factor_Zp(cyc_factor):
     return res
 
 
-def upper_bound_tate(cp, frob_matrix, precision, over_Qp=True):
+def upper_bound_tate(cp, frob_matrix, precision, over_Qp=False):
     """
     Return a upper bound for Tate classes over characteristic 0
     TODO: improove documentation
@@ -291,37 +308,37 @@ def upper_bound_tate(cp, frob_matrix, precision, over_Qp=True):
 
 
     T = matrix(K, 0, frob_matrix.ncols())
+    factor_i = []
     dim_Ti = []
     obsi = []
     obsi_val = []
-    dim_Ki =[]
-    dim_Ki_val = []
+    dim_Li =[]
+    dim_Li_val = []
     for cyc_fac, cyc_exp in cyc_factorization:
+        factor_i.append((cyc_fac, cyc_exp))
         Ti = matrix(K, 0, frob_matrix.ncols())
         obsij = []
         obsij_val = []
         dim_Tij = []
-        dim_Kij = []
-        dim_Kij_val = []
+        dim_Lij = []
+        dim_Lij_val = []
         for fac, exp in tate_factor_Zp(cyc_fac):
             # the rows of Tij are a basis for Tij
             Tij = fac(frob_matrix).right_kernel_matrix()
             dim_Tij.append(Tij.nrows())
             assert Tij.nrows() == fac.degree()*exp*cyc_exp
-            # Lij is given by the kernel of the obs_map
-            # dim Lij = dim Tij - rank(Tij*P1)
             obs_map = Tij*P1
             rank_obs_ij = obs_map.rank()
             obsij.append(rank_obs_ij)
             obsij_val.append(minors_valuation(obs_map, rank_obs_ij))
-            Kijmatrix = matrix(K, Tij.nrows(), 0)
+            Lijmatrix = matrix(K, Tij.nrows(), 0)
             for ell in range(fac.degree()):
-                Kijmatrix = Kijmatrix.augment(Tij*frob_power(ell).transpose()*P1)
-            # Kij = right_kernel(K) subspace of Lij that is invariant under Frob
-            Krank = Kijmatrix.rank()
-            dim_Kij.append(Tij.nrows() - Krank)
-            dim_Kij_val.append(minors_valuation(Kijmatrix, Krank))
-            assert dim_Kij[-1] % fac.degree()  == 0
+                Lijmatrix = Lijmatrix.augment(Tij*frob_power(ell).transpose()*P1)
+            # Lij = right_kernel(K) subspace of Tij that is invariant under Frob and unobstructed
+            Krank = Lijmatrix.rank()
+            dim_Lij.append(Tij.nrows() - Krank)
+            dim_Lij_val.append(minors_valuation(Lijmatrix, Krank))
+            assert dim_Lij[-1] % fac.degree() == 0
 
             Ti = Ti.stack(Tij)
         T = T.stack(Ti)
@@ -329,22 +346,21 @@ def upper_bound_tate(cp, frob_matrix, precision, over_Qp=True):
             dim_Ti.append(dim_Tij)
             obsi.append(obsij)
             obsi_val.append(obsij_val)
-            dim_Ki.append(dim_Kij)
-            dim_Ki_val.append(dim_Kij_val)
+            dim_Li.append(dim_Lij)
+            dim_Li_val.append(dim_Lij_val)
         else:
             obs_map = Ti*P1
             dim_Ti.append(Ti.nrows())
             rank_obs_i = obs_map.rank()
             obsi.append(rank_obs_i)
             obsi_val.append(minors_valuation(obs_map, rank_obs_i))
-            Kimatrix = matrix(K, Ti.nrows(), 0)
+            Limatrix = matrix(K, Ti.nrows(), 0)
             for ell in range(fac.degree()):
-                Kimatrix = Kimatrix.augment(Ti*frob_power(ell).transpose()*P1)
-            # Ki = right_kernel(K) subspace of Li that is invariant under Frob
-            Krank = Kimatrix.rank()
-            dim_Ki.append(Tij.nrows() - Krank)
-            dim_Ki_val.append(minors_valuation(Kimatrix, Krank))
-            assert dim_Ki[-1] % fac.degree()  == 0
+                Limatrix = Limatrix.augment(Ti*frob_power(ell).transpose()*P1)
+            # Li = right_kernel(K) subspace of Tij that is invariant under Frob and unobstructed            Krank = Limatrix.rank()
+            dim_Li.append(Tij.nrows() - Krank)
+            dim_Li_val.append(minors_valuation(Limatrix, Krank))
+            assert dim_Li[-1] % fac.degree()  == 0
     assert T.nrows() == sum(fac.degree()*exp for fac, exp in cyc_factorization)
 
-    return dim_Ti, obsi, obsi_val, dim_Ki, dim_Ki_val
+    return factor_i, dim_Ti, obsi, obsi_val, dim_Li, dim_Li_val
