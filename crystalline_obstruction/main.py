@@ -184,10 +184,11 @@ def crystalline_obstruction(f, p, precision, over_Qp=False, **kwargs):
     t = Rt.gens()[0]
     cp = Rt(cp)
     rank, k, cyc_factor = rank_fieldextension(cp, shift)
-    tate_factor = tate_factor_Zp(cyc_factor.expand())
-    max_degree = max(elt.degree() for elt, _ in tate_factor)
-    if max_degree > precision - 1:
-        warnings.warn('Precision is very likely too low to correctly compute the Tate classes at this prime')
+    if cyc_factor:
+        tate_factor = tate_factor_Zp(cyc_factor.expand())
+        max_degree = max(elt.degree() for elt, _ in tate_factor)
+        if max_degree > precision - 1:
+            warnings.warn('Precision is very likely too low to correctly compute the Tate classes at this prime')
     factor_i, dim_Ti, obsi, obsi_val, dim_Li, dim_Li_val = upper_bound_tate(cp, frob_matrix, precision, over_Qp=over_Qp)
     res = {}
     res['precision'] = precision
