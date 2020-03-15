@@ -325,20 +325,21 @@ def upper_bound_tate(cp, frob_matrix, precision, over_Qp=False):
         for fac, exp in tate_factor_Zp(cyc_fac):
             # the rows of Tij are a basis for Tij
             Tij = fac(frob_matrix).right_kernel_matrix()
-            dim_Tij.append(Tij.nrows())
             assert Tij.nrows() == fac.degree()*exp*cyc_exp
-            obs_map = Tij*P1
-            rank_obs_ij = obs_map.rank()
-            obsij.append(rank_obs_ij)
-            obsij_val.append(minors_valuation(obs_map, rank_obs_ij))
-            Lijmatrix = matrix(K, Tij.nrows(), 0)
-            for ell in range(fac.degree()):
-                Lijmatrix = Lijmatrix.augment(Tij*frob_power(ell).transpose()*P1)
-            # Lij = right_kernel(K) subspace of Tij that is invariant under Frob and unobstructed
-            Krank = Lijmatrix.rank()
-            dim_Lij.append(Tij.nrows() - Krank)
-            dim_Lij_val.append(minors_valuation(Lijmatrix, Krank))
-            assert dim_Lij[-1] % fac.degree() == 0
+            if over_Qp:
+                dim_Tij.append(Tij.nrows())
+                obs_map = Tij*P1
+                rank_obs_ij = obs_map.rank()
+                obsij.append(rank_obs_ij)
+                obsij_val.append(minors_valuation(obs_map, rank_obs_ij))
+                Lijmatrix = matrix(K, Tij.nrows(), 0)
+                for ell in range(fac.degree()):
+                    Lijmatrix = Lijmatrix.augment(Tij*frob_power(ell).transpose()*P1)
+                # Lij = right_kernel(K) subspace of Tij that is invariant under Frob and unobstructed
+                Krank = Lijmatrix.rank()
+                dim_Lij.append(Tij.nrows() - Krank)
+                dim_Lij_val.append(minors_valuation(Lijmatrix, Krank))
+                assert dim_Lij[-1] % fac.degree() == 0
 
             Ti = Ti.stack(Tij)
         T = T.stack(Ti)
@@ -350,17 +351,19 @@ def upper_bound_tate(cp, frob_matrix, precision, over_Qp=False):
             dim_Li_val.append(dim_Lij_val)
         else:
             obs_map = Ti*P1
+            assert Ti.nrows() == cyc_fac.degree()*cyc_exp
             dim_Ti.append(Ti.nrows())
             rank_obs_i = obs_map.rank()
             obsi.append(rank_obs_i)
             obsi_val.append(minors_valuation(obs_map, rank_obs_i))
             Limatrix = matrix(K, Ti.nrows(), 0)
-            for ell in range(fac.degree()):
+            for ell in range(0,cyc_fac.degree()):
                 Limatrix = Limatrix.augment(Ti*frob_power(ell).transpose()*P1)
-            # Li = right_kernel(K) subspace of Tij that is invariant under Frob and unobstructed            Krank = Limatrix.rank()
-            dim_Li.append(Tij.nrows() - Krank)
+            # Li = right_kernel(K) subspace of Tij that is invariant under Frob and unobstructed
+            Krank = Limatrix.rank()
+            dim_Li.append(Ti.nrows() - Krank)
             dim_Li_val.append(minors_valuation(Limatrix, Krank))
-            assert dim_Li[-1] % fac.degree()  == 0
+            assert dim_Li[-1] % cyc_fac.degree()  == 0
     assert T.nrows() == sum(fac.degree()*exp for fac, exp in cyc_factorization)
 
     return factor_i, dim_Ti, obsi, obsi_val, dim_Li, dim_Li_val
