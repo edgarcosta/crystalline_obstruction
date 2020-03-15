@@ -32,7 +32,7 @@ setup(
     url="https://github.com/edgarcosta/crystalline_obstruction",
     license="GNU General Public License, version 2 or 3",
     description="Wrapper for computing an approximation to the crystalline obstruction map ",
-    long_description = readfile("README.rst"), # get the long description from the README
+    long_description = readfile("README.md"), # get the long description from the README
     version = readfile("VERSION"), # the VERSION file is shared with the documentation
     classifiers=[
       # How mature is this project? Common values are
