@@ -65,7 +65,7 @@ def find_monic_and_odd_model(f, p):
     return f.monic()
 
 
-def compute_frob_matrix_and_cp_H2(f, p, prec):
+def compute_frob_matrix_and_cp_H2(f, p, prec, **kwargs):
     """
     Return a p-adic matrix approximating the action of Frob on H^2 of a surface or abelian variety,
     and its characteristic polynomial over ZZ
@@ -73,6 +73,7 @@ def compute_frob_matrix_and_cp_H2(f, p, prec):
         - f, or fs defining the curve or surface
         - p, prime
         - prec, a lower bound for the desired precision to run the computations, this increases the time exponentially
+        - kwargs, keyword arguments to be passed to controlledreduction
 
     Output:
         - `prec`, the minimum digits absolute precision for approximation of the Frobenius
@@ -142,13 +143,17 @@ def compute_frob_matrix_and_cp_H2(f, p, prec):
                 prec = max(5, prec)
         OK = ZpCA(p, prec=prec)
         # a rough estimate if it is worth to find a non degenerate mode for f
-        model = binomial(3 + (prec - 1)*f.total_degree(), 3) < 6*len(list(f**(prec-1)))
+        if 'find_better_model' in kwargs:
+            model = kwargs['find_better_model']
+        else:
+            model = binomial(3 + (prec - 1)*f.total_degree(), 3) < 6*len(list(f**(prec-1)))
+        threads = kwargs.get('threads', ncpus)
         cp, frob_matrix = controlledreduction(f,
                                               p,
                                               min_abs_precision=prec,
                                               frob_matrix=True,
                                               find_better_model=model,
-                                              threads=ncpus
+                                              threads=threads
                                               )
         frob_matrix = frob_matrix.change_ring(OK).change_ring(K)
     else:
@@ -165,6 +170,7 @@ def crystalline_obstruction(f, p, precision, over_Qp=False, **kwargs):
         - f, or fs defining the curve or surface
         - p, prime
         - prec, a lower bound for the desired precision to run the computations, this increases the time exponentially
+        - kwargs, keyword arguments to bypass some computations or to be passed to controlledreduction
 
     Output:
         - `prec`, the minimum digits absolute precision for approximation of the Frobenius
@@ -179,7 +185,7 @@ def crystalline_obstruction(f, p, precision, over_Qp=False, **kwargs):
         frob_matrix = kwargs['frob_matrix']
         shift = kwargs.get('shift', 0)
     else:
-        precision, cp, frob_matrix, shift = compute_frob_matrix_and_cp_H2(f, p, precision)
+        precision, cp, frob_matrix, shift = compute_frob_matrix_and_cp_H2(f, p, precision, **kwargs)
     Rt = PolynomialRing(ZZ, 't')
     t = Rt.gens()[0]
     cp = Rt(cp)
