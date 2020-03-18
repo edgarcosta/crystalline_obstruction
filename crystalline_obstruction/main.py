@@ -370,7 +370,11 @@ def upper_bound_tate(cp, frob_matrix, precision, over_Qp=False):
             Krank = Limatrix.rank()
             dim_Li.append(Ti.nrows() - Krank)
             dim_Li_val.append(minors_valuation(Limatrix, Krank))
-            assert dim_Li[-1] % cyc_fac.degree()  == 0, "dim_Li[-1] = %s, cyc_fac.degree() = %s" % (dim_Li[-1], cyc_fac.degree())
+            if dim_Li[-1] % cyc_fac.degree()  != 0:
+                old_dim = dim_Li[-1]
+                deg = cyc_fac.degree()
+                new_dim = dim_Li[-1] = deg * (old_dim // deg)
+                warnings.warn("rounding dimension of Li from %d to %d for cyc_factor = %s" % (old_dim, new_dim, cyc_factor))
     assert T.nrows() == sum(fac.degree()*exp for fac, exp in cyc_factorization)
 
     return factor_i, dim_Ti, obsi, obsi_val, dim_Li, dim_Li_val
