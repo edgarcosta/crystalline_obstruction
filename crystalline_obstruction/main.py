@@ -374,7 +374,7 @@ def upper_bound_tate(cp, frob_matrix, precision, over_Qp=False):
                 old_dim = dim_Li[-1]
                 deg = cyc_fac.degree()
                 new_dim = dim_Li[-1] = deg * (old_dim // deg)
-                warnings.warn("rounding dimension of Li from %d to %d for cyc_factor = %s" % (old_dim, new_dim, cyc_factor))
+                warnings.warn("rounding dimension of Li from %d to %d for cyc_factor = %s" % (old_dim, new_dim, cyc_fac))
     assert T.nrows() == sum(fac.degree()*exp for fac, exp in cyc_factorization)
 
     return factor_i, dim_Ti, obsi, obsi_val, dim_Li, dim_Li_val
