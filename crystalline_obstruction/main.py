@@ -11,13 +11,77 @@ from sage.structure.factorization import Factorization
 from sage.schemes.hyperelliptic_curves.constructor import HyperellipticCurve
 from pycontrolledreduction import controlledreduction
 import multiprocessing
-ncpus = multiprocessing.cpu_count()
+ncpus = 1 # ultiprocessing.cpu_count()
 import warnings
 from sage.schemes.hyperelliptic_curves.hypellfrob import hypellfrob
 from sage.misc.cachefunc import cached_function
 
 
-def from_H1_to_H2(cp1, F1):
+def from_H1_to_H2(cp1, F1, tensor=False):
+    """
+    Input:
+        cp1 - characteristic polynomial of Frob acting on H^1
+        F1 - Frob approximation of the action H^1
+        tensor - replace H^2 by H^1 otimes H^1
+    Output:
+        cp2 - characteristic polynomial of Frob acting on H^2
+        F2 - Frob approximation of the action H^2
+
+    """
+    if tensor:
+        return from_H1_to_H1otimesH1(cp1, F1)
+    # deal with Frob approximation
+    wedge_basis = [(i,j) for i in range(F1.nrows()) for j in range(i+1, F1.nrows())]
+    M = FiniteRankFreeModule(F1.base_ring(), F1.nrows())
+    M.basis('e')
+    F1e = [M(elt) for elt in F1.columns()]
+    F2e = [F1e[i].wedge(F1e[j]) for i, j in wedge_basis]
+    F2 = matrix([[elt.comp()[i,j] for elt in F2e] for i,j in wedge_basis])
+    # deduce the correct characteristic polynomial
+    assert cp1[0] == 1, "The constant term of the characteristic polynomial must be 1"
+    cp2 = Lpoly_H2(cp1)
+    return cp2, F2
+
+
+def tensor_charpoly(f, g):
+    r"""
+    INPUT:
+
+    - ``f`` -- the characteristic polynomial of a linear transformation
+
+    - ``g`` -- the characteristic polynomial of a linear transformation
+
+    OUTPUT: the characteristic polynomial of the tensor product of the linear transformations
+
+    EXAMPLES::
+
+    sage: x = PolynomialRing(ZZ,"x").gen();
+    sage: tensor_charpoly((x - 3) * (x + 2),  (x - 7) * (x + 5))
+    (x - 21) * (x - 10) * (x + 14) * (x + 15)
+
+    """
+
+    R = PolynomialRing(g.parent(), "y");
+    y = R.gen();
+    #x = g.parent().gen()
+    A = f(y)
+    B = R(g.homogenize(y))
+    return B.resultant(A)
+
+
+def base_change(Lpoly, r):
+    R = Lpoly.parent()
+    T = R.gen()
+    S.<u> = R[]
+    return R(Lpoly(u).resultant(u^r - T))
+
+def Lpoly_H1otimesH1(Lpoly):
+    return tensor_charpoly(Lpoly, Lpoly)
+
+def Lpoly_H2(Lpoly):
+    return ((tensor_charpoly(Lpoly, Lpoly)//base_change(Lpoly, 2))).sqrt()
+
+def from_H1_to_H1otimesH1(cp1, F1):
     """
     Input:
         cp1 - characteristic polynomial of Frob acting on H^1
@@ -28,23 +92,18 @@ def from_H1_to_H2(cp1, F1):
 
     """
     # deal with Frob approximation
-    wedge_basis = [(i,j) for i in range(F1.nrows()) for j in range(i+1, F1.nrows())]
+    basis = [(i,j) for i in range(F1.nrows()) for j in range(F1.nrows())]
+    genus = F1.nrows()//2
+    weight = lambda pair: sum(-1 if elt < genus else 0 for elt in pair)
+    basis.sort(key=weight)
     M = FiniteRankFreeModule(F1.base_ring(), F1.nrows())
     M.basis('e')
     F1e = [M(elt) for elt in F1.columns()]
-    F2e = [F1e[i].wedge(F1e[j]) for i, j in wedge_basis]
-    F2 = matrix([[elt.comp()[i,j] for elt in F2e] for i,j in wedge_basis])
+    F2e = [F1e[i]*F1e[j] for i, j in basis]
+    F2 = matrix([[elt.comp()[i,j] for elt in F2e] for i,j in basis])
     # deduce the correct characteristic polynomial
     assert cp1[0] == 1, "The constant term of the characteristic polynomial must be 1"
-    cprev = cp1.reverse()
-    F1_cp = companion_matrix(cprev)
-    assert F1.nrows() == F1_cp.nrows()
-    M = FiniteRankFreeModule(F1_cp.base_ring(), F1.nrows())
-    M.basis('e')
-    F1e_cp = [M(elt) for elt in F1_cp.columns()]
-    F2e_cp = [F1e_cp[i].wedge(F1e_cp[j]) for i, j in wedge_basis]
-    F2_cp = matrix([[elt.comp()[i,j] for elt in F2e_cp] for i,j in wedge_basis])
-    cp2 = F2_cp.charpoly(var = cp1.variables()[0]).reverse()
+    cp2 = Lpoly_H1otimesH1(cp1)
     return cp2, F2
 
 def find_monic_and_odd_model(f, p):
@@ -100,26 +159,26 @@ def compute_frob_matrix_and_cp_H2(f, p, prec, **kwargs):
         f = a**2 - 4*b
         f = find_monic_and_odd_model(f.change_ring(K), p)
         cp1 = HyperellipticCurve(f.change_ring(GF(p))).frobenius_polynomial().reverse()
-        F1 = hypellfrob(p, prec, f.lift())
-        cp, frob_matrix = from_H1_to_H2(cp1, F1)
+        F1 = hypellfrob(p, max(3, prec), f.lift())
+        cp, frob_matrix = from_H1_to_H2(cp1, F1, tensor=kwargs.get('tensor', False))
         frob_matrix = frob_matrix.change_ring(K)
         shift = 0
     elif len(Rf.gens()) == 3 and f.total_degree() == 4 and f.is_homogeneous():
         # Quartic plane curve
         if p < 17:
-            prec = max(3, prec)
+            prec = max(4, prec)
         else:
-            prec = max(2, prec)
+            prec = max(3, prec)
         OK = ZpCA(p, prec=prec)
         cp1, F1 = controlledreduction(f,
                                       p,
                                       min_abs_precision=prec,
                                       frob_matrix=True,
-                                      threads=ncpus
+                                      threads=1
                                       )
         # change ring to OK truncates precision accordingly
         F1 = F1.change_ring(OK).change_ring(K)
-        cp, frob_matrix = from_H1_to_H2(cp1, F1)
+        cp, frob_matrix = from_H1_to_H2(cp1, F1, tensor=kwargs.get('tensor', False))
         shift = 0
     elif len(Rf.gens()) == 4 and f.total_degree() in [4, 5] and f.is_homogeneous():
         shift = 1
@@ -173,9 +232,8 @@ def crystalline_obstruction(f, p, precision, over_Qp=False, **kwargs):
         - kwargs, keyword arguments to bypass some computations or to be passed to controlledreduction
 
     Output:
-        - `prec`, the minimum digits absolute precision for approximation of the Frobenius
-        - the number of Tate classes
-        - a lower bound on the rank of the obstruction map
+        - an upper bound on the number of Tate classes over Qbar
+        - a dictionary more information, matching the papers notation, on how one we attained that bound
 
     Note: if given a univariate polynomial (or a pair), we will try to change the model over Qpbar,
     in order to work with an odd and monic model
