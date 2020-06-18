@@ -72,8 +72,9 @@ def tensor_charpoly(f, g):
 def base_change(Lpoly, r):
     R = Lpoly.parent()
     T = R.gen()
-    S.<u> = R[]
-    return R(Lpoly(u).resultant(u^r - T))
+    S = PolynomialRing(R, 'u')
+    u = S.gen()
+    return R(Lpoly(u).resultant(u**r - T))
 
 def Lpoly_H1otimesH1(Lpoly):
     return tensor_charpoly(Lpoly, Lpoly)
