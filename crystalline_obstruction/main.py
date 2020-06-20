@@ -11,7 +11,7 @@ from sage.structure.factorization import Factorization
 from sage.schemes.hyperelliptic_curves.constructor import HyperellipticCurve
 from pycontrolledreduction import controlledreduction
 import multiprocessing
-ncpus = 1 # ultiprocessing.cpu_count()
+ncpus =  multiprocessing.cpu_count()
 import warnings
 from sage.schemes.hyperelliptic_curves.hypellfrob import hypellfrob
 from sage.misc.cachefunc import cached_function
@@ -130,7 +130,7 @@ def compute_frob_matrix_and_cp_H2(f, p, prec, **kwargs):
     Return a p-adic matrix approximating the action of Frob on H^2 of a surface or abelian variety,
     and its characteristic polynomial over ZZ
     Input:
-        - f, or fs defining the curve or surface
+        - f defining the curve or surface
         - p, prime
         - prec, a lower bound for the desired precision to run the computations, this increases the time exponentially
         - kwargs, keyword arguments to be passed to controlledreduction
@@ -227,7 +227,7 @@ def compute_frob_matrix_and_cp_H2(f, p, prec, **kwargs):
 def crystalline_obstruction(f, p, precision, over_Qp=False, **kwargs):
     """
     Input:
-        - f, or fs defining the curve or surface
+        - f defining the curve or surface
         - p, prime
         - prec, a lower bound for the desired precision to run the computations, this increases the time exponentially
         - kwargs, keyword arguments to bypass some computations or to be passed to controlledreduction
