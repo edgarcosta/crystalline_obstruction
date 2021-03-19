@@ -23,10 +23,12 @@ At the moment we support:
 # Installing
 
 ```
+sage -pip install --upgrade git+https://github.com/edgarcosta/pycontrolledreduction@master
 sage -pip install --upgrade git+https://github.com/edgarcosta/crystalline_obstruction.git@master#egg=crystalline_obstruction
 ```
 If you don't have permissions to install it system wide, please add the flag ``--user`` to install it just for you.
 ```
+sage -pip install --user --upgrade git+https://github.com/edgarcosta/pycontrolledreduction@master
 sage -pip install --user --upgrade git+https://github.com/edgarcosta/crystalline_obstruction.git@master#egg=crystalline_obstruction
 ```
 
@@ -37,7 +39,7 @@ sage -pip install --user --upgrade git+https://github.com/edgarcosta/crystalline
 ### Example 5.1
 ```
 sage: from crystalline_obstruction import crystalline_obstruction
-sage: f = ZZ['x,y']('x^5 - 2*x^4 + 2*x^3 - 4*x^2 + 3*x - 1 -y^2'),
+sage: f = ZZ['x,y']('x^5 - 2*x^4 + 2*x^3 - 4*x^2 + 3*x - 1 -y^2')
 sage: crystalline_obstruction(f=f, p=31, precision=3)
 (1,
  {'precision': 3,
@@ -50,7 +52,7 @@ sage: crystalline_obstruction(f=f, p=31, precision=3)
 ### Example 5.2
 With `prec = 100` takes about 3 minutes
 ```
-sage: f = ZZ['x,y']('x^5 - 2*x^4 + 7*x^3 - 5*x^2 + 8*x + 3 -y^2'),
+sage: f = ZZ['x,y']('x^5 - 2*x^4 + 7*x^3 - 5*x^2 + 8*x + 3 -y^2')
 sage: crystalline_obstruction(f=f, p=4999, precision=20)
 (2,
  {'precision': 20,
@@ -62,7 +64,7 @@ sage: crystalline_obstruction(f=f, p=4999, precision=20)
 ```
 ### Hyperelliptic curve given in a non-Weierstrass format
 ```
-sage: f = ZZ['x,y']('(2*x^6+3*x^5+5*x^4+6*x^3+4*x^2+x) -y*(x^4+x^3+x) -y^2'),
+sage: f = ZZ['x,y']('(2*x^6+3*x^5+5*x^4+6*x^3+4*x^2+x) -y*(x^4+x^3+x) -y^2')
 sage: crystalline_obstruction(f=f, p=59, precision=4)
 (3,
  {'precision': 4,
@@ -76,7 +78,7 @@ sage: crystalline_obstruction(f=f, p=59, precision=4)
 ## Jacobians of quartic plane curves
 ### Example 5.3
 ```
-sage: f = ZZ['x,y,z']('x*y^3 + x^3*z - x*y^2*z + x^2*z^2 + y^2*z^2 - y*z^3'),
+sage: f = ZZ['x,y,z']('x*y^3 + x^3*z - x*y^2*z + x^2*z^2 + y^2*z^2 - y*z^3')
 sage: crystalline_obstruction(f, p=31, precision=3)
 (1,
  {'precision': 3,
@@ -88,7 +90,7 @@ sage: crystalline_obstruction(f, p=31, precision=3)
 ```
 ### Product of 3 elliptic curves over x^3 - 3*x - 1
 ```
-sage: f=ZZ['x,y,z']('x^3*z + x^2*y*z + x^2*z^2 - x*y^3 - x*y*z^2 - x*z^3 + y^2*z^2'),
+sage: f=ZZ['x,y,z']('x^3*z + x^2*y*z + x^2*z^2 - x*y^3 - x*y*z^2 - x*z^3 + y^2*z^2')
 sage: crystalline_obstruction(f=f, p=31, precision=5)
 (3,
  {'precision': 5,
