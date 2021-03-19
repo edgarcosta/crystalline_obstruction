@@ -1,7 +1,10 @@
 # crystalline_obstruction
 
 This package computes an approximation the crystalline obstruction map on its space of Tate classes.
-This gives rigorous upper bounds on the middle geometric Picard number of a given projective hypersurface or the geometric Picard number of Jacobian variety.
+In practice, this gives rigorous upper bounds on the:
+ - middle geometric Picard number of a given projective hypersurface;
+ - the geometric Picard number of a Jacobian; or
+ - the dimension of the geometric endomorphism algebra of a Jacobian by working on H^1(A) x H^1(A).
 
 For more details see:
 
@@ -40,7 +43,7 @@ sage -pip install --user --upgrade git+https://github.com/edgarcosta/crystalline
 ```
 sage: from crystalline_obstruction import crystalline_obstruction
 sage: f = ZZ['x,y']('x^5 - 2*x^4 + 2*x^3 - 4*x^2 + 3*x - 1 -y^2')
-sage: crystalline_obstruction(f=f, p=31, precision=3)
+sage: crystalline_obstruction(f=f, p=31, precision=3) # bounding dim Pic
 (1,
  {'precision': 3,
   'p': 31,
@@ -49,11 +52,26 @@ sage: crystalline_obstruction(f=f, p=31, precision=3)
   'dim Ti': [2],
   'dim Li': [1]})
 ```
+
+
+#### Now bounding Endomorphism algebra
+```
+sage: from crystalline_obstruction import crystalline_obstruction
+sage: f = ZZ['x,y']('x^5 - 2*x^4 + 2*x^3 - 4*x^2 + 3*x - 1 -y^2')
+sage: crystalline_obstruction(f=f, p=31, precision=3, tensor=True) # bounding dim End
+(1,
+ {'precision': 3,
+  'p': 31,
+  'rank T(X_Fpbar)': 4,
+  'factors': [(t - 1, 4)],
+  'dim Ti': [4],
+  'dim Li': [1]})
+```
 ### Example 5.2
 With `prec = 100` takes about 3 minutes
 ```
 sage: f = ZZ['x,y']('x^5 - 2*x^4 + 7*x^3 - 5*x^2 + 8*x + 3 -y^2')
-sage: crystalline_obstruction(f=f, p=4999, precision=20)
+sage: crystalline_obstruction(f=f, p=4999, precision=20) # bounding dim Pic
 (2,
  {'precision': 20,
   'p': 4999,
@@ -62,10 +80,11 @@ sage: crystalline_obstruction(f=f, p=4999, precision=20)
   'dim Ti': [2],
   'dim Li': [2]})
 ```
+
 ### Hyperelliptic curve given in a non-Weierstrass format
 ```
 sage: f = ZZ['x,y']('(2*x^6+3*x^5+5*x^4+6*x^3+4*x^2+x) -y*(x^4+x^3+x) -y^2')
-sage: crystalline_obstruction(f=f, p=59, precision=4)
+sage: crystalline_obstruction(f=f, p=59, precision=4) # bounding dim End
 (3,
  {'precision': 4,
   'p': 59,
@@ -79,7 +98,7 @@ sage: crystalline_obstruction(f=f, p=59, precision=4)
 ### Example 5.3
 ```
 sage: f = ZZ['x,y,z']('x*y^3 + x^3*z - x*y^2*z + x^2*z^2 + y^2*z^2 - y*z^3')
-sage: crystalline_obstruction(f, p=31, precision=3)
+sage: crystalline_obstruction(f, p=31, precision=3) # bounding dim Pic
 (1,
  {'precision': 3,
   'p': 31,
@@ -91,7 +110,7 @@ sage: crystalline_obstruction(f, p=31, precision=3)
 ### Product of 3 elliptic curves over x^3 - 3*x - 1
 ```
 sage: f=ZZ['x,y,z']('x^3*z + x^2*y*z + x^2*z^2 - x*y^3 - x*y*z^2 - x*z^3 + y^2*z^2')
-sage: crystalline_obstruction(f=f, p=31, precision=5)
+sage: crystalline_obstruction(f=f, p=31, precision=5) # bounding dim Pic
 (3,
  {'precision': 5,
   'p': 31,
@@ -99,6 +118,28 @@ sage: crystalline_obstruction(f=f, p=31, precision=5)
   'factors': [(t - 1, 3), (t^2 + t + 1, 3)],
   'dim Ti': [3, 6],
   'dim Li': [1, 2]})
+```
+
+
+### Bounding endomorphism algebra and the Picard number
+```
+sage: f = ZZ['x,y,z']('x^4+x^2*y^2+2*x^2*y*z-x^2*z^2-6*y^4+16*y^3*z-12*y^2*z^2-16*y*z^3-6*z^4')
+sage: crystalline_obstruction(f=f, p=5003, precision=3) # bounding dim Pic
+(6,
+ {'precision': 3,
+  'p': 5003,
+  'rank T(X_Fpbar)': 9,
+  'factors': [(t + 1, 2), (t - 1, 3), (t^2 + 1, 2)],
+  'dim Ti': [2, 3, 4],
+  'dim Li': [2, 2, 2]})
+sage: crystalline_obstruction(f=f, p=5003, precision=3, tensor=True) # bounding dim End
+(9,
+ {'precision': 3,
+  'p': 5003,
+  'rank T(X_Fpbar)': 18,
+  'factors': [(t + 1, 4), (t - 1, 6), (t^2 + 1, 4)],
+  'dim Ti': [4, 6, 8],
+  'dim Li': [2, 3, 4]})
 ```
 
 ## Quartic surfaces
