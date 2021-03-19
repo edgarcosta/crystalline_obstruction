@@ -4,7 +4,7 @@ This package computes an approximation the crystalline obstruction map on its sp
 In practice, this gives rigorous upper bounds on the:
  - middle geometric Picard number of a given projective hypersurface;
  - the geometric Picard number of a Jacobian; or
- - the dimension of the geometric endomorphism algebra of a Jacobian by working on H^1(A) x H^1(A).
+ - the dimension of the geometric endomorphism algebra of a Jacobian by working (see examples below).
 
 For more details see:
 
@@ -121,7 +121,7 @@ sage: crystalline_obstruction(f=f, p=31, precision=5) # bounding dim Pic
 ```
 
 
-### Bounding endomorphism algebra and the Picard number
+### Another gennus 3 plane quartic
 ```
 sage: f = ZZ['x,y,z']('x^4+x^2*y^2+2*x^2*y*z-x^2*z^2-6*y^4+16*y^3*z-12*y^2*z^2-16*y*z^3-6*z^4')
 sage: crystalline_obstruction(f=f, p=5003, precision=3) # bounding dim Pic
