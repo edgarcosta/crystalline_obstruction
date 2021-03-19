@@ -5,7 +5,7 @@ from sage.rings.finite_rings.finite_field_constructor import GF
 from sage.rings.infinity import Infinity
 from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
 from sage.arith.functions import lcm
-from sage.matrix.special import zero_matrix, identity_matrix, matrix, companion_matrix
+from sage.matrix.special import zero_matrix, identity_matrix, matrix
 from sage.tensor.modules.finite_rank_free_module import FiniteRankFreeModule
 from sage.structure.factorization import Factorization
 from sage.schemes.hyperelliptic_curves.constructor import HyperellipticCurve
@@ -254,7 +254,7 @@ def crystalline_obstruction(f, p, precision, over_Qp=False, **kwargs):
         max_degree = max(elt.degree() for elt, _ in tate_factor)
         if max_degree > precision - 1:
             warnings.warn('Precision is very likely too low to correctly compute the Tate classes at this prime')
-    factor_i, dim_Ti, obsi, obsi_val, dim_Li, dim_Li_val = upper_bound_tate(cp, frob_matrix, precision, over_Qp=over_Qp)
+    factor_i, dim_Ti, obsi, obsi_val, dim_Li, _ = upper_bound_tate(cp, frob_matrix, precision, over_Qp=over_Qp, minors=False)
     res = {}
     res['precision'] = precision
     res['p'] = p
@@ -324,7 +324,7 @@ def tate_factor_Zp(cyc_factor):
     return res
 
 
-def upper_bound_tate(cp, frob_matrix, precision, over_Qp=False):
+def upper_bound_tate(cp, frob_matrix, precision, over_Qp=False, minors=False):
     """
     Return a upper bound for Tate classes over characteristic 0
     TODO: improove documentation
@@ -364,6 +364,9 @@ def upper_bound_tate(cp, frob_matrix, precision, over_Qp=False):
             return frob_matrix * frob_power(k-1)
 
     def minors_valuation(M, rank):
+        # consider using smith form for minors
+        if not minors:
+            return None
         if rank == min(M.ncols(), M.nrows()):
             return +Infinity
         elif rank == 0:
