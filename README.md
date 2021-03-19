@@ -54,7 +54,7 @@ sage: crystalline_obstruction(f=f, p=31, precision=3) # bounding dim Pic
 ```
 
 
-#### Now bounding Endomorphism algebra
+#### Bounding the geometric dimension of Endomorphism algebra
 ```
 sage: from crystalline_obstruction import crystalline_obstruction
 sage: f = ZZ['x,y']('x^5 - 2*x^4 + 2*x^3 - 4*x^2 + 3*x - 1 -y^2')
