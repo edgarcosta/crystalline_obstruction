@@ -4,7 +4,9 @@ This package computes an approximation the crystalline obstruction map on its sp
 In practice, this gives rigorous upper bounds on the:
  - middle geometric Picard number of a given projective hypersurface;
  - the geometric Picard number of a Jacobian; or
- - the dimension of the geometric endomorphism algebra of a Jacobian by working (see examples below).
+ - the dimension of the geometric endomorphism algebra of a Jacobian.
+
+See examples below.
 
 For more details see:
 
