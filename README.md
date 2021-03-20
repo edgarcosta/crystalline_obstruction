@@ -86,7 +86,7 @@ sage: crystalline_obstruction(f=f, p=4999, precision=20) # bounding dim Pic
 ### Hyperelliptic curve given in a non-Weierstrass format
 ```
 sage: f = ZZ['x,y']('(2*x^6+3*x^5+5*x^4+6*x^3+4*x^2+x) -y*(x^4+x^3+x) -y^2')
-sage: crystalline_obstruction(f=f, p=59, precision=4) # bounding dim End
+sage: crystalline_obstruction(f=f, p=59, precision=4)
 (3,
  {'precision': 4,
   'p': 59,
