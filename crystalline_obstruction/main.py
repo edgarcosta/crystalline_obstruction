@@ -224,12 +224,14 @@ def compute_frob_matrix_and_cp_H2(f, p, prec, **kwargs):
     return prec, cp, frob_matrix, shift
 
 
-def crystalline_obstruction(f, p, precision, over_Qp=False, **kwargs):
+def crystalline_obstruction(f, p, precision, over_Qp=False, pedantic=False, **kwargs):
     """
     Input:
         - f defining the curve or surface
         - p, prime
-        - prec, a lower bound for the desired precision to run the computations, this increases the time exponentially
+        - precision, a lower bound for the desired precision to run the computations, this increases the time exponentially
+        - over_Qp, by default False, if to only given an upper bound on the cycles defined over Qp
+        - pedantic, by default False, if True might inform user of some bound improvements which werent achieved by pure linear algebra arguments
         - kwargs, keyword arguments to bypass some computations or to be passed to controlledreduction
 
     Output:
@@ -254,7 +256,7 @@ def crystalline_obstruction(f, p, precision, over_Qp=False, **kwargs):
         max_degree = max(elt.degree() for elt, _ in tate_factor)
         if max_degree > precision - 1:
             warnings.warn('Precision is very likely too low to correctly compute the Tate classes at this prime')
-    factor_i, dim_Ti, obsi, obsi_val, dim_Li, _ = upper_bound_tate(cp, frob_matrix, precision, over_Qp=over_Qp, minors=False)
+    factor_i, dim_Ti, obsi, obsi_val, dim_Li, _ = upper_bound_tate(cp, frob_matrix, precision, over_Qp=over_Qp, pedantic=pedantic, minors=False)
     res = {}
     res['precision'] = precision
     res['p'] = p
@@ -324,7 +326,7 @@ def tate_factor_Zp(cyc_factor):
     return res
 
 
-def upper_bound_tate(cp, frob_matrix, precision, over_Qp=False, minors=False):
+def upper_bound_tate(cp, frob_matrix, precision, over_Qp=False, pedantic=True, minors=False):
     """
     Return a upper bound for Tate classes over characteristic 0
     TODO: improove documentation
@@ -436,7 +438,8 @@ def upper_bound_tate(cp, frob_matrix, precision, over_Qp=False, minors=False):
                 old_dim = dim_Li[-1]
                 deg = cyc_fac.degree()
                 new_dim = dim_Li[-1] = deg * (old_dim // deg)
-                warnings.warn("rounding dimension of Li from %d to %d for cyc_factor = %s" % (old_dim, new_dim, cyc_fac))
+                if pedantic:
+                    warnings.warn("rounding dimension of Li from %d to %d for cyc_factor = %s" % (old_dim, new_dim, cyc_fac))
     assert T.nrows() == sum(fac.degree()*exp for fac, exp in cyc_factorization)
 
     return factor_i, dim_Ti, obsi, obsi_val, dim_Li, dim_Li_val
