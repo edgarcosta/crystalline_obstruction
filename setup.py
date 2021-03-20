@@ -47,7 +47,9 @@ setup(
     ], # classifiers list: https://pypi.python.org/pypi?%3Aaction=list_classifiers
     keywords = "sagemath crystalline obstruction",
     setup_requires=["sagemath"], # currently useless, see https://www.python.org/dev/peps/pep-0518/
-    install_requires=["pycontrolledreduction", "sagemath", "sphinx"],
+    install_requires=["pycontrolledreduction@ git+https://github.com/edgarcosta/pycontrolledreduction.git@master#egg=pycontrolledreduction",
+                      "sagemath",
+                      "sphinx"],
     packages=["crystalline_obstruction"],
     include_package_data = True,
     cmdclass = {'test': SageTest}, # adding a special setup command for tests
