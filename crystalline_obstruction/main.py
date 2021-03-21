@@ -262,26 +262,26 @@ def crystalline_obstruction(f, p, precision, over_Qp=False, pedantic=False, **kw
 
         sage: from crystalline_obstruction import crystalline_obstruction
         sage: f = ZZ['x,y']('x^5 - 2*x^4 + 2*x^3 - 4*x^2 + 3*x - 1 -y^2')
-        sage: crystalline_obstruction(f=f, p=31, precision=2) # bounding dim Pic
+        sage: crystalline_obstruction(f=f, p=31, precision=3) # bounding dim Pic
         (1,
          {'dim Li': [1],
           'dim Ti': [2],
           'factors': [(t - 1, 2)],
           'p': 31,
-          'precision': 2,
+          'precision': 3,
           'rank T(X_Fpbar)': 2})
 
 
     Bounding the geometric dimension of Endomorphism algebra
 
         sage: f = ZZ['x,y']('x^5 - 2*x^4 + 2*x^3 - 4*x^2 + 3*x - 1 -y^2')
-        sage: crystalline_obstruction(f=f, p=31, precision=2, tensor=True) # bounding dim End
+        sage: crystalline_obstruction(f=f, p=31, precision=3, tensor=True) # bounding dim End
         (1,
          {'dim Li': [1],
           'dim Ti': [4],
           'factors': [(t - 1, 4)],
           'p': 31,
-          'precision': 2,
+          'precision': 3,
           'rank T(X_Fpbar)': 4})
 
     Example 5.2
@@ -367,13 +367,13 @@ def crystalline_obstruction(f, p, precision, over_Qp=False, pedantic=False, **kw
           'p': 101,
           'precision': 3,
           'rank T(X_Fpbar)': 20})
-        sage: crystalline_obstruction(f=f, p=101, precision=4)
+        sage: crystalline_obstruction(f=f, p=101, precision=3)
         (19,
          {'dim Li': [1, 6, 12],
           'dim Ti': [1, 7, 12],
           'factors': [(t - 1, 1), (t - 1, 7), (t + 1, 12)],
           'p': 101,
-          'precision': 4,
+          'precision': 3,
           'rank T(X_Fpbar)': 20})
 
     Example 5.6
@@ -580,7 +580,7 @@ def upper_bound_tate(cp, frob_matrix, precision, over_Qp=False, pedantic=True, m
             # the 'computed' argument avoids echelonizing the kernel basis
             # which might induce some precision loss on the projection
             Tij = fac(frob_matrix).right_kernel_matrix(basis='computed')
-            assert Tij.nrows() == fac.degree()*exp*cyc_exp
+            assert Tij.nrows() == fac.degree()*exp*cyc_exp, "We are missing some eigenvalues, increasing the precision should solve this"
             if over_Qp:
                 dim_Tij.append(Tij.nrows())
                 obs_map = Tij*P1

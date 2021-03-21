@@ -49,7 +49,7 @@ sage: crystalline_obstruction(f=f, p=31, precision=3) # bounding dim Pic
   'dim Ti': [2],
   'factors': [(t - 1, 2)],
   'p': 31,
-  'precision': 2,
+  'precision': 3,
   'rank T(X_Fpbar)': 2})
 ```
 
@@ -58,13 +58,13 @@ sage: crystalline_obstruction(f=f, p=31, precision=3) # bounding dim Pic
 ```
 sage: from crystalline_obstruction import crystalline_obstruction
 sage: f = ZZ['x,y']('x^5 - 2*x^4 + 2*x^3 - 4*x^2 + 3*x - 1 -y^2')
-sage: crystalline_obstruction(f=f, p=31, precision=2, tensor=True) # bounding dim End
+sage: crystalline_obstruction(f=f, p=31, precision=3, tensor=True) # bounding dim End
 (1,
  {'dim Li': [1],
   'dim Ti': [4],
   'factors': [(t - 1, 4)],
   'p': 31,
-  'precision': 2,
+  'precision': 3,
   'rank T(X_Fpbar)': 4})
 ```
 ### Example 5.2
@@ -84,7 +84,7 @@ sage: crystalline_obstruction(f=f, p=4999, precision=20) # bounding dim Pic
 ### Hyperelliptic curve given in a non-Weierstrass format
 ```
 sage: f = ZZ['x,y']('(2*x^6+3*x^5+5*x^4+6*x^3+4*x^2+x) -y*(x^4+x^3+x) -y^2')
-sage: crystalline_obstruction(f=f, p=59, precision=4)
+sage: crystalline_obstruction(f=f, p=59, precision=3)
 (3,
  {'dim Li': [1, 2],
   'dim Ti': [3, 6],
@@ -110,7 +110,7 @@ sage: crystalline_obstruction(f, p=31, precision=3) # bounding dim Pic
 ### Product of 3 elliptic curves over x^3 - 3*x - 1
 ```
 sage: f=ZZ['x,y,z']('x^3*z + x^2*y*z + x^2*z^2 - x*y^3 - x*y*z^2 - x*z^3 + y^2*z^2')
-sage: crystalline_obstruction(f=f, p=31, precision=5) # bounding dim Pic
+sage: crystalline_obstruction(f=f, p=31, precision=3) # bounding dim Pic
 (3,
  {'dim Li': [1, 2],
   'dim Ti': [3, 6],
