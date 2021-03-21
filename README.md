@@ -45,12 +45,12 @@ sage: from crystalline_obstruction import crystalline_obstruction
 sage: f = ZZ['x,y']('x^5 - 2*x^4 + 2*x^3 - 4*x^2 + 3*x - 1 -y^2')
 sage: crystalline_obstruction(f=f, p=31, precision=3) # bounding dim Pic
 (1,
- {'precision': 3,
-  'p': 31,
-  'rank T(X_Fpbar)': 2,
-  'factors': [(t - 1, 2)],
+ {'dim Li': [1],
   'dim Ti': [2],
-  'dim Li': [1]})
+  'factors': [(t - 1, 2)],
+  'p': 31,
+  'precision': 2,
+  'rank T(X_Fpbar)': 2})
 ```
 
 
@@ -60,12 +60,12 @@ sage: from crystalline_obstruction import crystalline_obstruction
 sage: f = ZZ['x,y']('x^5 - 2*x^4 + 2*x^3 - 4*x^2 + 3*x - 1 -y^2')
 sage: crystalline_obstruction(f=f, p=31, precision=3, tensor=True) # bounding dim End
 (1,
- {'precision': 3,
-  'p': 31,
-  'rank T(X_Fpbar)': 4,
-  'factors': [(t - 1, 4)],
+ {'dim Li': [1],
   'dim Ti': [4],
-  'dim Li': [1]})
+  'factors': [(t - 1, 4)],
+  'p': 31,
+  'precision': 2,
+  'rank T(X_Fpbar)': 4})
 ```
 ### Example 5.2
 With `prec = 100` takes about 3 minutes
@@ -73,12 +73,12 @@ With `prec = 100` takes about 3 minutes
 sage: f = ZZ['x,y']('x^5 - 2*x^4 + 7*x^3 - 5*x^2 + 8*x + 3 -y^2')
 sage: crystalline_obstruction(f=f, p=4999, precision=20) # bounding dim Pic
 (2,
- {'precision': 20,
-  'p': 4999,
-  'rank T(X_Fpbar)': 2,
-  'factors': [(t - 1, 2)],
+ {'dim Li': [2],
   'dim Ti': [2],
-  'dim Li': [2]})
+  'factors': [(t - 1, 2)],
+  'p': 4999,
+  'precision': 20,
+  'rank T(X_Fpbar)': 2})
 ```
 
 ### Hyperelliptic curve given in a non-Weierstrass format
@@ -86,12 +86,12 @@ sage: crystalline_obstruction(f=f, p=4999, precision=20) # bounding dim Pic
 sage: f = ZZ['x,y']('(2*x^6+3*x^5+5*x^4+6*x^3+4*x^2+x) -y*(x^4+x^3+x) -y^2')
 sage: crystalline_obstruction(f=f, p=59, precision=4)
 (3,
- {'precision': 4,
-  'p': 59,
-  'rank T(X_Fpbar)': 9,
-  'factors': [(t - 1, 3), (t^2 + t + 1, 3)],
+ {'dim Li': [1, 2],
   'dim Ti': [3, 6],
-  'dim Li': [1, 2]})
+  'factors': [(t - 1, 3), (t^2 + t + 1, 3)],
+  'p': 31,
+  'precision': 3,
+  'rank T(X_Fpbar)': 9})
 ```
 
 ## Jacobians of quartic plane curves
@@ -100,24 +100,24 @@ sage: crystalline_obstruction(f=f, p=59, precision=4)
 sage: f = ZZ['x,y,z']('x*y^3 + x^3*z - x*y^2*z + x^2*z^2 + y^2*z^2 - y*z^3')
 sage: crystalline_obstruction(f, p=31, precision=3) # bounding dim Pic
 (1,
- {'precision': 3,
-  'p': 31,
-  'rank T(X_Fpbar)': 3,
-  'factors': [(t - 1, 3)],
+ {'dim Li': [1],
   'dim Ti': [3],
-  'dim Li': [1]})
+  'factors': [(t - 1, 3)],
+  'p': 31,
+  'precision': 3,
+  'rank T(X_Fpbar)': 3})
 ```
 ### Product of 3 elliptic curves over x^3 - 3*x - 1
 ```
 sage: f=ZZ['x,y,z']('x^3*z + x^2*y*z + x^2*z^2 - x*y^3 - x*y*z^2 - x*z^3 + y^2*z^2')
 sage: crystalline_obstruction(f=f, p=31, precision=5) # bounding dim Pic
 (3,
- {'precision': 5,
-  'p': 31,
-  'rank T(X_Fpbar)': 9,
-  'factors': [(t - 1, 3), (t^2 + t + 1, 3)],
+ {'dim Li': [1, 2],
   'dim Ti': [3, 6],
-  'dim Li': [1, 2]})
+  'factors': [(t - 1, 3), (t^2 + t + 1, 3)],
+  'p': 31,
+  'precision': 3,
+  'rank T(X_Fpbar)': 9})
 ```
 
 
@@ -126,20 +126,20 @@ sage: crystalline_obstruction(f=f, p=31, precision=5) # bounding dim Pic
 sage: f = ZZ['x,y,z']('x^4+x^2*y^2+2*x^2*y*z-x^2*z^2-6*y^4+16*y^3*z-12*y^2*z^2-16*y*z^3-6*z^4')
 sage: crystalline_obstruction(f=f, p=5003, precision=3) # bounding dim Pic
 (6,
- {'precision': 3,
-  'p': 5003,
-  'rank T(X_Fpbar)': 9,
-  'factors': [(t + 1, 2), (t - 1, 3), (t^2 + 1, 2)],
+ {'dim Li': [2, 2, 2],
   'dim Ti': [2, 3, 4],
-  'dim Li': [2, 2, 2]})
+  'factors': [(t + 1, 2), (t - 1, 3), (t^2 + 1, 2)],
+  'p': 5003,
+  'precision': 3,
+  'rank T(X_Fpbar)': 9})
 sage: crystalline_obstruction(f=f, p=5003, precision=3, tensor=True) # bounding dim End
 (9,
- {'precision': 3,
-  'p': 5003,
-  'rank T(X_Fpbar)': 18,
-  'factors': [(t + 1, 4), (t - 1, 6), (t^2 + 1, 4)],
+ {'dim Li': [2, 3, 4],
   'dim Ti': [4, 6, 8],
-  'dim Li': [2, 3, 4]})
+  'factors': [(t + 1, 4), (t - 1, 6), (t^2 + 1, 4)],
+  'p': 5003,
+  'precision': 3,
+  'rank T(X_Fpbar)': 18})
 ```
 
 ## Quartic surfaces
@@ -148,44 +148,44 @@ sage: crystalline_obstruction(f=f, p=5003, precision=3, tensor=True) # bounding 
 sage: f = ZZ['x,y,z,w']("x^4 + y^4 + z^4 + w^4 + 101^3*x*y*z*w")
 sage: crystalline_obstruction(f, p=101, precision=3)
 (20,
- {'precision': 3,
-  'p': 101,
-  'rank T(X_Fpbar)': 20,
-  'factors': [(t - 1, 1), (t - 1, 7), (t + 1, 12)],
+ {'dim Li': [1, 7, 12],
   'dim Ti': [1, 7, 12],
-  'dim Li': [1, 7, 12]})
+  'factors': [(t - 1, 1), (t - 1, 7), (t + 1, 12)],
+  'p': 101,
+  'precision': 3,
+  'rank T(X_Fpbar)': 20})
 sage: crystalline_obstruction(f=f, p=101, precision=4)
 (19,
- {'precision': 4,
-  'p': 101,
-  'rank T(X_Fpbar)': 20,
-  'factors': [(t - 1, 1), (t - 1, 7), (t + 1, 12)],
+ {'dim Li': [1, 6, 12],
   'dim Ti': [1, 7, 12],
-  'dim Li': [1, 6, 12]})
+  'factors': [(t - 1, 1), (t - 1, 7), (t + 1, 12)],
+  'p': 101,
+  'precision': 4,
+  'rank T(X_Fpbar)': 20})
 ```
 ### Example 5.6
 ```
 sage: f = ZZ['x,y,z,w']("y^4 - x^3*z + y*z^3 + z*w^3 + w^4")
 sage: crystalline_obstruction(f=f, p=89, precision=3)
 (4,
- {'precision': 3,
-  'p': 89,
-  'rank T(X_Fpbar)': 10,
-  'factors': [(t - 1, 1), (t + 1, 1), (t - 1, 4), (t^4 + 1, 1)],
+ {'dim Li': [1, 0, 3, 0],
   'dim Ti': [1, 1, 4, 4],
-  'dim Li': [1, 0, 3, 0]})
+  'factors': [(t - 1, 1), (t + 1, 1), (t - 1, 4), (t^4 + 1, 1)],
+  'p': 89,
+  'precision': 3,
+  'rank T(X_Fpbar)': 10})
 ```
 ### Example 5.7
 ```
 sage: f = ZZ['x,y,z,w']("x^4 + 2*y^4 + 2*y*z^3 + 3*z^4 - 2*x^3*w- 2*y*w^3")
 sage: crystalline_obstruction(f=f, p=67, precision=3)
 (3,
- {'precision': 3,
-  'p': 67,
-  'rank T(X_Fpbar)': 4,
-  'factors': [(t - 1, 1), (t + 1, 3)],
+ {'dim Li': [1, 2],
   'dim Ti': [1, 3],
-  'dim Li': [1, 2]})
+  'factors': [(t - 1, 1), (t + 1, 3)],
+  'p': 67,
+  'precision': 3,
+  'rank T(X_Fpbar)': 4})
 ```
 
 ## Quintic surfaces

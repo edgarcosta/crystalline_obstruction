@@ -55,9 +55,12 @@ def tensor_charpoly(f, g):
 
     EXAMPLES::
 
+    sage: from crystalline_obstruction.main import tensor_charpoly
     sage: x = PolynomialRing(ZZ,"x").gen();
     sage: tensor_charpoly((x - 3) * (x + 2),  (x - 7) * (x + 5))
-    (x - 21) * (x - 10) * (x + 14) * (x + 15)
+    x^4 - 2*x^3 - 479*x^2 - 420*x + 44100
+    sage: (x - 21) * (x - 10) * (x + 14) * (x + 15)
+    x^4 - 2*x^3 - 479*x^2 - 420*x + 44100
 
     """
 
@@ -226,20 +229,198 @@ def compute_frob_matrix_and_cp_H2(f, p, prec, **kwargs):
 
 def crystalline_obstruction(f, p, precision, over_Qp=False, pedantic=False, **kwargs):
     """
-    Input:
-        - f defining the curve or surface
-        - p, prime
-        - precision, a lower bound for the desired precision to run the computations, this increases the time exponentially
-        - over_Qp, by default False, if to only given an upper bound on the cycles defined over Qp
-        - pedantic, by default False, if True might inform user of some bound improvements which werent achieved by pure linear algebra arguments
-        - kwargs, keyword arguments to bypass some computations or to be passed to controlledreduction
+    INPUT:
 
-    Output:
-        - an upper bound on the number of Tate classes over Qbar
-        - a dictionary more information, matching the papers notation, on how one we attained that bound
+    - ``f`` -- a polynomial defining the curve or surface.  Note if given an hyperelliptic curve we will try to change the model over Qpbar,
+    in order to work with an odd and monic model over Qp.
 
-    Note: if given a univariate polynomial (or a pair), we will try to change the model over Qpbar,
-    in order to work with an odd and monic model
+    - ``p`` -- a prime of good reduction
+
+    - ``precision`` -- a lower bound for the desired precision to run the computations, this increases the time exponentially
+
+    - ``over_Qp`` -- by default False, if True uses the factorization of the cyclotomic polynomials over Qp
+
+    - ``pedantic` -- by default False, if True might inform user of some bound improvements which werent achieved by pure linear algebra arguments
+
+    - ``kwargs`` -- keyword arguments to bypass some computations or to be passed to controlledreduction
+
+    OUTPUT:
+
+    - an upper bound on the number of Tate classes over Qbar
+
+    - a dictionary more information, matching the papers notation, on how one we attained that bound
+
+
+
+
+    README examples
+
+    Jacobians of hyperelliptic curves with a Weierstrass point over Qp
+
+    Example 5.1
+
+        sage: from crystalline_obstruction import crystalline_obstruction
+        sage: f = ZZ['x,y']('x^5 - 2*x^4 + 2*x^3 - 4*x^2 + 3*x - 1 -y^2')
+        sage: crystalline_obstruction(f=f, p=31, precision=2) # bounding dim Pic
+        (1,
+         {'dim Li': [1],
+          'dim Ti': [2],
+          'factors': [(t - 1, 2)],
+          'p': 31,
+          'precision': 2,
+          'rank T(X_Fpbar)': 2})
+
+
+    Bounding the geometric dimension of Endomorphism algebra
+
+        sage: f = ZZ['x,y']('x^5 - 2*x^4 + 2*x^3 - 4*x^2 + 3*x - 1 -y^2')
+        sage: crystalline_obstruction(f=f, p=31, precision=2, tensor=True) # bounding dim End
+        (1,
+         {'dim Li': [1],
+          'dim Ti': [4],
+          'factors': [(t - 1, 4)],
+          'p': 31,
+          'precision': 2,
+          'rank T(X_Fpbar)': 4})
+
+    Example 5.2
+
+        sage: f = ZZ['x,y']('x^5 - 2*x^4 + 7*x^3 - 5*x^2 + 8*x + 3 -y^2')
+        sage: crystalline_obstruction(f=f, p=4999, precision=20) # bounding dim Pic
+        (2,
+         {'dim Li': [2],
+          'dim Ti': [2],
+          'factors': [(t - 1, 2)],
+          'p': 4999,
+          'precision': 20,
+          'rank T(X_Fpbar)': 2})
+
+    Hyperelliptic curve given in a non-Weierstrass format
+
+        sage: f = ZZ['x,y']('(2*x^6+3*x^5+5*x^4+6*x^3+4*x^2+x) -y*(x^4+x^3+x) -y^2')
+        sage: crystalline_obstruction(f=f, p=59, precision=3)
+        (3,
+         {'dim Li': [1, 2],
+          'dim Ti': [3, 6],
+          'factors': [(t - 1, 3), (t^2 + t + 1, 3)],
+          'p': 59,
+          'precision': 3,
+          'rank T(X_Fpbar)': 9})
+
+    Jacobians of quartic plane curves
+    Example 5.3
+
+        sage: f = ZZ['x,y,z']('x*y^3 + x^3*z - x*y^2*z + x^2*z^2 + y^2*z^2 - y*z^3')
+        sage: crystalline_obstruction(f, p=31, precision=3) # bounding dim Pic
+        (1,
+         {'dim Li': [1],
+          'dim Ti': [3],
+          'factors': [(t - 1, 3)],
+          'p': 31,
+          'precision': 3,
+          'rank T(X_Fpbar)': 3})
+
+    Product of 3 elliptic curves over x^3 - 3*x - 1
+
+        sage: f=ZZ['x,y,z']('x^3*z + x^2*y*z + x^2*z^2 - x*y^3 - x*y*z^2 - x*z^3 + y^2*z^2')
+        sage: crystalline_obstruction(f=f, p=31, precision=3) # bounding dim Pic
+        (3,
+         {'dim Li': [1, 2],
+          'dim Ti': [3, 6],
+          'factors': [(t - 1, 3), (t^2 + t + 1, 3)],
+          'p': 31,
+          'precision': 3,
+          'rank T(X_Fpbar)': 9})
+
+
+    Another gennus 3 plane quartic
+
+        sage: f = ZZ['x,y,z']('x^4+x^2*y^2+2*x^2*y*z-x^2*z^2-6*y^4+16*y^3*z-12*y^2*z^2-16*y*z^3-6*z^4')
+        sage: crystalline_obstruction(f=f, p=5003, precision=3) # bounding dim Pic
+        (6,
+         {'dim Li': [2, 2, 2],
+          'dim Ti': [2, 3, 4],
+          'factors': [(t + 1, 2), (t - 1, 3), (t^2 + 1, 2)],
+          'p': 5003,
+          'precision': 3,
+          'rank T(X_Fpbar)': 9})
+        sage: crystalline_obstruction(f=f, p=5003, precision=3, tensor=True) # bounding dim End
+        (9,
+         {'dim Li': [2, 3, 4],
+          'dim Ti': [4, 6, 8],
+          'factors': [(t + 1, 4), (t - 1, 6), (t^2 + 1, 4)],
+          'p': 5003,
+          'precision': 3,
+          'rank T(X_Fpbar)': 18})
+
+    Quartic surfaces
+
+    Example 5.5
+
+        sage: f = ZZ['x,y,z,w']("x^4 + y^4 + z^4 + w^4 + 101^3*x*y*z*w")
+        sage: crystalline_obstruction(f, p=101, precision=3)
+        (20,
+         {'dim Li': [1, 7, 12],
+          'dim Ti': [1, 7, 12],
+          'factors': [(t - 1, 1), (t - 1, 7), (t + 1, 12)],
+          'p': 101,
+          'precision': 3,
+          'rank T(X_Fpbar)': 20})
+        sage: crystalline_obstruction(f=f, p=101, precision=4)
+        (19,
+         {'dim Li': [1, 6, 12],
+          'dim Ti': [1, 7, 12],
+          'factors': [(t - 1, 1), (t - 1, 7), (t + 1, 12)],
+          'p': 101,
+          'precision': 4,
+          'rank T(X_Fpbar)': 20})
+
+    Example 5.6
+
+        sage: f = ZZ['x,y,z,w']("y^4 - x^3*z + y*z^3 + z*w^3 + w^4")
+        sage: crystalline_obstruction(f=f, p=89, precision=3)
+        (4,
+         {'dim Li': [1, 0, 3, 0],
+          'dim Ti': [1, 1, 4, 4],
+          'factors': [(t - 1, 1), (t + 1, 1), (t - 1, 4), (t^4 + 1, 1)],
+          'p': 89,
+          'precision': 3,
+          'rank T(X_Fpbar)': 10})
+
+    Example 5.7
+
+        sage: f = ZZ['x,y,z,w']("x^4 + 2*y^4 + 2*y*z^3 + 3*z^4 - 2*x^3*w- 2*y*w^3")
+        sage: crystalline_obstruction(f=f, p=67, precision=3)
+        (3,
+         {'dim Li': [1, 2],
+          'dim Ti': [1, 3],
+          'factors': [(t - 1, 1), (t + 1, 3)],
+          'p': 67,
+          'precision': 3,
+          'rank T(X_Fpbar)': 4})
+
+    TESTS::
+
+    Check that precision = 3 is sufficient
+
+        sage: from crystalline_obstruction import crystalline_obstruction
+        sage: crystalline_obstruction(f=ZZ['x,y']('y^2-(48*x^8 + 12*x^6 - 22*x^4- 13*x^2 - 2)'),p=107,precision=3)
+        (2,
+         {'dim Li': [2],
+          'dim Ti': [3],
+          'factors': [(t - 1, 3)],
+          'p': 107,
+          'precision': 3,
+          'rank T(X_Fpbar)': 3})
+        sage: crystalline_obstruction(f=ZZ['x,y']('y^2-(48*x^8 + 12*x^6 - 22*x^4- 13*x^2 - 2)'),p=107,precision=3,tensor=True)
+        (2,
+         {'dim Li': [2],
+          'dim Ti': [6],
+          'factors': [(t - 1, 6)],
+          'p': 107,
+          'precision': 3,
+          'rank T(X_Fpbar)': 6})
+
     """
     if 'cp' in kwargs and 'frob_matrix' in kwargs:
         cp = kwargs['cp']
@@ -395,7 +576,9 @@ def upper_bound_tate(cp, frob_matrix, precision, over_Qp=False, pedantic=True, m
         dim_Lij_val = []
         for fac, exp in tate_factor_Zp(cyc_fac):
             # the rows of Tij are a basis for Tij
-            Tij = fac(frob_matrix).right_kernel_matrix()
+            # the 'computed' argument avoids echelonizing the kernel basis
+            # which might induce some precision loss on the projection
+            Tij = fac(frob_matrix).right_kernel_matrix(basis='computed')
             assert Tij.nrows() == fac.degree()*exp*cyc_exp
             if over_Qp:
                 dim_Tij.append(Tij.nrows())
