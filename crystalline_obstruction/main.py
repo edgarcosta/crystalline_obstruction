@@ -252,6 +252,7 @@ def crystalline_obstruction(f, p, precision, over_Qp=False, pedantic=False, **kw
 
 
 
+    EXAMPLES::
 
     README examples
 

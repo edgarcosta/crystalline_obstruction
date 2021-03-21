@@ -58,7 +58,7 @@ sage: crystalline_obstruction(f=f, p=31, precision=3) # bounding dim Pic
 ```
 sage: from crystalline_obstruction import crystalline_obstruction
 sage: f = ZZ['x,y']('x^5 - 2*x^4 + 2*x^3 - 4*x^2 + 3*x - 1 -y^2')
-sage: crystalline_obstruction(f=f, p=31, precision=3, tensor=True) # bounding dim End
+sage: crystalline_obstruction(f=f, p=31, precision=2, tensor=True) # bounding dim End
 (1,
  {'dim Li': [1],
   'dim Ti': [4],
