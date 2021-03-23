@@ -413,6 +413,9 @@ def crystalline_obstruction(f, p, precision, over_Qp=False, pedantic=False, **kw
           'p': 107,
           'precision': 3,
           'rank T(X_Fpbar)': 3})
+
+    Check that the result is consistent at various primes and different precision parameters and never giving a wrong upper bound:
+
         sage: crystalline_obstruction(f=ZZ['x,y']('y^2-(48*x^8 + 12*x^6 - 22*x^4- 13*x^2 - 2)'),p=107,precision=3,tensor=True)
         (2,
          {'dim Li': [2],
@@ -421,7 +424,38 @@ def crystalline_obstruction(f, p, precision, over_Qp=False, pedantic=False, **kw
           'p': 107,
           'precision': 3,
           'rank T(X_Fpbar)': 6})
+        sage: for p in [103, 107]:
+        ....:     for i in range(3,8):
+        ....:         print(crystalline_obstruction(f=ZZ['x,y']('-x^8 - 7*x^7 - 7*x^6 + 14*x^5 +35*x^4 + 35*x^3 + 14*x^2 - x - 1 - y^2'),
+        ....:                             p=p,precision=i,tensor=True))
+        ....:
+        (18, {'precision': 3, 'p': 103, 'rank T(X_Fpbar)': 36, 'factors': [(t - 1, 6), (t + 1, 6), (t^2 - t + 1, 6), (t^2 + t + 1, 6)], 'dim Ti': [6, 6, 12, 12], 'dim Li': [3, 3, 6, 6]})
+        (18, {'precision': 4, 'p': 103, 'rank T(X_Fpbar)': 36, 'factors': [(t - 1, 6), (t + 1, 6), (t^2 - t + 1, 6), (t^2 + t + 1, 6)], 'dim Ti': [6, 6, 12, 12], 'dim Li': [3, 3, 6, 6]})
+        (18, {'precision': 5, 'p': 103, 'rank T(X_Fpbar)': 36, 'factors': [(t - 1, 6), (t + 1, 6), (t^2 - t + 1, 6), (t^2 + t + 1, 6)], 'dim Ti': [6, 6, 12, 12], 'dim Li': [3, 3, 6, 6]})
+        (18, {'precision': 6, 'p': 103, 'rank T(X_Fpbar)': 36, 'factors': [(t - 1, 6), (t + 1, 6), (t^2 - t + 1, 6), (t^2 + t + 1, 6)], 'dim Ti': [6, 6, 12, 12], 'dim Li': [3, 3, 6, 6]})
+        (18, {'precision': 7, 'p': 103, 'rank T(X_Fpbar)': 36, 'factors': [(t - 1, 6), (t + 1, 6), (t^2 - t + 1, 6), (t^2 + t + 1, 6)], 'dim Ti': [6, 6, 12, 12], 'dim Li': [3, 3, 6, 6]})
+        (18, {'precision': 3, 'p': 107, 'rank T(X_Fpbar)': 36, 'factors': [(t - 1, 18), (t + 1, 18)], 'dim Ti': [18, 18], 'dim Li': [9, 9]})
+        (18, {'precision': 4, 'p': 107, 'rank T(X_Fpbar)': 36, 'factors': [(t - 1, 18), (t + 1, 18)], 'dim Ti': [18, 18], 'dim Li': [9, 9]})
+        (18, {'precision': 5, 'p': 107, 'rank T(X_Fpbar)': 36, 'factors': [(t - 1, 18), (t + 1, 18)], 'dim Ti': [18, 18], 'dim Li': [9, 9]})
+        (18, {'precision': 6, 'p': 107, 'rank T(X_Fpbar)': 36, 'factors': [(t - 1, 18), (t + 1, 18)], 'dim Ti': [18, 18], 'dim Li': [9, 9]})
+        (18, {'precision': 7, 'p': 107, 'rank T(X_Fpbar)': 36, 'factors': [(t - 1, 18), (t + 1, 18)], 'dim Ti': [18, 18], 'dim Li': [9, 9]})
 
+
+    Check that some prime attains the (3,3) bound:
+
+        sage: for p in [101, 103, 113]:
+        ....:     print(crystalline_obstruction(ZZ['x,y'](' 4*x^8 - 20*x^6 + 33*x^4 - 17*x^2 - 2 - y^2'), p=p, precision=3))
+        ....:     print(crystalline_obstruction(ZZ['x,y'](' 4*x^8 - 20*x^6 + 33*x^4 - 17*x^2 - 2 - y^2'), p=p, precision=3, tensor=True))
+        ....:     print()
+        ....:
+        (6, {'precision': 3, 'p': 101, 'rank T(X_Fpbar)': 9, 'factors': [(t + 1, 4), (t - 1, 5)], 'dim Ti': [4, 5], 'dim Li': [2, 4]})
+        (9, {'precision': 3, 'p': 101, 'rank T(X_Fpbar)': 18, 'factors': [(t + 1, 8), (t - 1, 10)], 'dim Ti': [8, 10], 'dim Li': [4, 5]})
+
+        (4, {'precision': 3, 'p': 103, 'rank T(X_Fpbar)': 5, 'factors': [(t - 1, 5)], 'dim Ti': [5], 'dim Li': [4]})
+        (5, {'precision': 3, 'p': 103, 'rank T(X_Fpbar)': 10, 'factors': [(t - 1, 10)], 'dim Ti': [10], 'dim Li': [5]})
+
+        (3, {'precision': 3, 'p': 113, 'rank T(X_Fpbar)': 3, 'factors': [(t - 1, 3)], 'dim Ti': [3], 'dim Li': [3]})
+        (3, {'precision': 3, 'p': 113, 'rank T(X_Fpbar)': 6, 'factors': [(t - 1, 6)], 'dim Ti': [6], 'dim Li': [3]})
     """
     if 'cp' in kwargs and 'frob_matrix' in kwargs:
         cp = kwargs['cp']
