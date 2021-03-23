@@ -438,7 +438,7 @@ def crystalline_obstruction(f, p, precision, over_Qp=False, pedantic=False, **kw
         max_degree = max(elt.degree() for elt, _ in tate_factor)
         if max_degree > precision - 1:
             warnings.warn('Precision is very likely too low to correctly compute the Tate classes at this prime')
-    factor_i, dim_Ti, obsi, obsi_val, dim_Li, _ = upper_bound_tate(cp, frob_matrix, precision, over_Qp=over_Qp, pedantic=pedantic, minors=False)
+    factor_i, dim_Ti, _, _, dim_Li, _ = upper_bound_tate(cp, frob_matrix, precision, over_Qp=over_Qp, pedantic=pedantic, minors=False)
     res = {}
     res['precision'] = precision
     res['p'] = p
@@ -508,6 +508,9 @@ def tate_factor_Zp(cyc_factor):
     return res
 
 
+
+
+
 def upper_bound_tate(cp, frob_matrix, precision, over_Qp=False, pedantic=True, minors=False):
     """
     Return a upper bound for Tate classes over characteristic 0
@@ -559,6 +562,22 @@ def upper_bound_tate(cp, frob_matrix, precision, over_Qp=False, pedantic=True, m
         else:
             return min([elt.valuation() for elt in M.minors(rank + 1)])
 
+    def padic_right_kernel_matrix(M):
+        d, _, v = M.smith_form(exact=False, integral=True)
+        basis = []
+        val = precision
+        for i in range(M.ncols()):
+            if d[i, i] != 0:
+                val = min(val, d[i ,i].precision_absolute())
+            if i >= M.nrows() or d[i, i] == 0:
+                basis.append( v.column(i) )
+        # I don't understand the -1
+        return matrix(ZpCA(p, prec=precision-1), basis).change_ring(K)
+
+
+    def padic_rank(M):
+        return sum(1 if elt != 0 else 0 for elt in M.smith_form(exact=False, integral=True, transformation=False).diagonal())
+
 
     T = matrix(K, 0, frob_matrix.ncols())
     factor_i = []
@@ -579,7 +598,11 @@ def upper_bound_tate(cp, frob_matrix, precision, over_Qp=False, pedantic=True, m
             # the rows of Tij are a basis for Tij
             # the 'computed' argument avoids echelonizing the kernel basis
             # which might induce some precision loss on the projection
-            Tij = fac(frob_matrix).right_kernel_matrix(basis='computed')
+            #Tij = fac(frob_matrix).right_kernel_matrix(basis='computed')
+
+            # computing the right kernel with smith form
+            # howell form or strong echelon could also be good options
+            Tij = padic_right_kernel_matrix(fac(frob_matrix))
             assert Tij.nrows() == fac.degree()*exp*cyc_exp, "We are missing some eigenvalues, increasing the precision should solve this"
             if over_Qp:
                 dim_Tij.append(Tij.nrows())
@@ -608,14 +631,14 @@ def upper_bound_tate(cp, frob_matrix, precision, over_Qp=False, pedantic=True, m
             obs_map = Ti*P1
             assert Ti.nrows() == cyc_fac.degree()*cyc_exp
             dim_Ti.append(Ti.nrows())
-            rank_obs_i = obs_map.rank()
+            rank_obs_i = padic_rank(obs_map)
             obsi.append(rank_obs_i)
             obsi_val.append(minors_valuation(obs_map, rank_obs_i))
             Limatrix = matrix(K, Ti.nrows(), 0)
             for ell in range(0,cyc_fac.degree()):
                 Limatrix = Limatrix.augment(Ti*frob_power(ell).transpose()*P1)
             # Li = right_kernel(K) subspace of Tij that is invariant under Frob and unobstructed
-            Krank = Limatrix.rank()
+            Krank = padic_rank(Limatrix)
             dim_Li.append(Ti.nrows() - Krank)
             dim_Li_val.append(minors_valuation(Limatrix, Krank))
             if dim_Li[-1] % cyc_fac.degree()  != 0:
