@@ -1,21 +1,164 @@
-from sage.all import ZZ # cannot seem to import this from the right place
-from sage.functions.other import binomial
-from sage.rings.padics.factory import Qp, Zp, ZpCA
-from sage.rings.finite_rings.finite_field_constructor import GF
-from sage.rings.infinity import Infinity
-from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
-from sage.arith.functions import lcm
-from sage.matrix.special import zero_matrix, identity_matrix, matrix
-from sage.tensor.modules.finite_rank_free_module import FiniteRankFreeModule
-from sage.structure.factorization import Factorization
-from sage.schemes.hyperelliptic_curves.constructor import HyperellipticCurve
-from pycontrolledreduction import controlledreduction
+from sage.all import (
+    Factorization,
+    FiniteRankFreeModule,
+    GF,
+    HyperellipticCurve,
+    Infinity,
+    PolynomialRing,
+    Qp, Zp,
+    ZZ,
+    ZpCA,
+    binomial,
+    cached_function,
+    identity_matrix,
+    infinity,
+    lcm,
+    matrix,
+    zero_matrix,
+)
+from copy import copy
 import multiprocessing
 ncpus =  multiprocessing.cpu_count()
 import warnings
 from sage.schemes.hyperelliptic_curves.hypellfrob import hypellfrob
-from sage.misc.cachefunc import cached_function
+from sage.rings.padics.precision_error import PrecisionError
+from pycontrolledreduction import controlledreduction
 
+
+# cache calls to controlledreduction
+#controlledreduction = cached_function(controlledreduction)
+
+
+## linear algebra over Z_p
+
+
+def padic_smith_form(M, transformation=True):
+    r"""
+    this uses a rank-1 reduction method
+    see: https://uwspace.uwaterloo.ca/bitstream/handle/10012/12241/Elsheikh_Mustafa.pdf Chapter 4
+    and is very similar to the p-adic smith form implemented in sage with exact=False
+    they find U and V  in Z/p^prec such that
+    st U*M*V = diag(elementary divisors) mod p^prec
+
+    On the contrary, we are interested in keep track of loss of precision
+    thus we compute U and V where some entries might have lower precision
+    U*M*V = diag(elementary divisors) modp^(prec - v)
+    where v is the highest valuation of the nonzero elementary divisors that we could detect
+    some entries of U and V might have more precision that `prec-v`
+
+    EXAMPLES::
+
+    sage: from crystalline_obstruction.main import padic_smith_form
+    sage: entries = [0, 5664461354126771, 12212357361910300, 15947020959157478, 0, 16792952041597449, 9399124951373949, 4818530271686800, 0, 14690359073749623, 11237259451999884, 5117434014428142, 15157488677243483, 9004103062307752, 20761679499270441, 4817969886991856, 19925864281756441, 12021725322600663, 4620722392655416, 5445142895231681, 6605357538252496, 7608812697273777, 18542817615638637, 18194689690271501, 16298292917596268,5029914121037969, 9960884344083847, 0, 20341333098836812, 12117922812876054, 1270149214447437, 0, 10999401748338075, 9493559500408195, 10612080564946174, 0, 4620722392655416, 10891113386038365, 956055025271903, 2162842206467093, 18542817615638637, 1143972982339214, 336113117292612, 469148515686007, 9960884344083847, 13128267973348003, 15817056104759912, 20531311511260484, 13598045280630823, 7585782589268305, 14053895308766769, 3065047087418756, 15664512169571917, 913325863843049]
+    sage: M = Matrix(ZpCA(43, prec=10, print_mode='val-unit'), 6, 9, entries)
+    sage: S, U, V = padic_smith_form(M)
+    sage: S.diagonal()
+    [43 * 1 + O(43^10),
+     43 * 1 + O(43^10),
+     43^2 * 1 + O(43^10),
+     43^9 * 1 + O(43^10),
+     O(43^10),
+     O(43^10)]
+    sage: (U*M*V).diagonal()
+    [43 * 1 + O(43^10),
+     43 * 1 + O(43^10),
+     43^2 * 1 + O(43^10),
+     O(43^9),
+     O(43^2),
+     O(43^2)]
+    sage: sS, sU, sV = M.smith_form(exact=False)
+    sage: (sS, sU, sV) == (S, U, V)
+    True
+    sage: V.column(4)
+    (34 + O(43), 30 + O(43), 38 + O(43), 9 + O(43), 1 + O(43^10), O(43^10), O(43^10), O(43^10), O(43^10))
+    sage: sV.column(4)
+    (13694996109475306 + O(43^10), 1917185461381533 + O(43^10), 113132459648579 + O(43^10), 9 + O(43^10), 1 + O(43^10), O(43^10), O(43^10), O(43^10), O(43^10))
+    """
+
+
+    n = M.nrows()
+    m = M.ncols()
+    if m > n:
+        if transformation:
+            S, U, V = padic_smith_form(M.transpose(), transformation)
+            return S.transpose(), V.transpose(), U.transpose()
+        else:
+            return padic_smith_form(M.transpose(), transformation)
+
+    R = M.base_ring()
+    s = [R.zero()]*m
+    S = copy(M)
+    left = identity_matrix(R,n)
+    right = identity_matrix(R,m)
+    smith = M.parent()(0)
+
+    val = -infinity
+    def find_pivot(l):
+        minval = infinity
+        ans = None
+        for i in range(l, n):
+            for j in range(l, m):
+                elt = S[i,j]
+                if elt != 0 and elt.valuation() < minval:
+                    minval = elt.valuation()
+                    ans = minval, i, j
+                    if minval == val: # we can't get lower
+                        return ans
+        return ans
+    for l in range(n):
+        pos  = find_pivot(l)
+        if pos:
+            val, i, j = pos
+        else:
+            # the matrix is all zeros
+            break
+        s[l] = R.one() << val
+        smith[l,l] = s[l]
+        S.swap_rows(i, l)
+        S.swap_columns(j, l)
+        if transformation:
+            left.swap_rows(i, l)
+            right.swap_columns(j, l)
+        w =  (S[l,l] >> val).inverse_of_unit()
+        # this corresponds to S = S - w*(M*x)*(y*M)
+        # where x = ej, y =ei
+        for i in range(l+1,n):
+            x = -w * (S[i,l] >> val) # we know that has val is the current min valuation
+            S.add_multiple_of_row(i, l, x, l + 1)
+            if transformation:
+                left.add_multiple_of_row(i, l, x)
+        if transformation:
+            left.rescale_row(l, w)
+            for j in range(l + 1, m):
+                right.add_multiple_of_column(j, l,  -w * (S[l, j] >> val))
+    if transformation:
+        return smith, left, right
+    else:
+        return s
+
+
+def padic_right_kernel_matrix(M, flatten_precision=False):
+    # TODO compare against the kernel obtained via the howell form with the same number of digits
+    # if p^prec < 2**63 - 1
+    d, _, v = padic_smith_form(M)
+    basis = []
+    val = -Infinity
+    for i in range(M.ncols()):
+        if i >= M.nrows() or d[i, i] == 0:
+            basis.append( v.column(i) )
+        else:
+            val = max(d[i,i].valuation(), val)
+    if flatten_precision:
+        assert M.base_ring()._prec_type() in ['capped-rel','capped-abs']
+        return matrix(Zp(M.base_ring().prime(),
+                         prec=M.base_ring().precision_cap()-val,
+                         type=M.base_ring()._prec_type()), basis)
+    return matrix(basis)
+
+
+
+def padic_rank(M):
+    return sum(1 if elt != 0 else 0 for elt in padic_smith_form(M, transformation=False))
 
 def from_H1_to_H2(cp1, F1, tensor=False):
     """
@@ -148,6 +291,7 @@ def compute_frob_matrix_and_cp_H2(f, p, prec, **kwargs):
     in order to work with an odd and monic model
     """
     K = Qp(p, prec=prec+10)
+    OK = ZpCA(p, prec=prec)
     Rf = f.parent()
     R = f.base_ring()
     if len(Rf.gens()) == 2:
@@ -164,6 +308,7 @@ def compute_frob_matrix_and_cp_H2(f, p, prec, **kwargs):
         f = find_monic_and_odd_model(f.change_ring(K), p)
         cp1 = HyperellipticCurve(f.change_ring(GF(p))).frobenius_polynomial().reverse()
         F1 = hypellfrob(p, max(3, prec), f.lift())
+        F1 = F1.change_ring(OK)
         cp, frob_matrix = from_H1_to_H2(cp1, F1, tensor=kwargs.get('tensor', False))
         frob_matrix = frob_matrix.change_ring(K)
         shift = 0
@@ -173,15 +318,20 @@ def compute_frob_matrix_and_cp_H2(f, p, prec, **kwargs):
             prec = max(4, prec)
         else:
             prec = max(3, prec)
-        OK = ZpCA(p, prec=prec)
+        if 'find_better_model' in kwargs:
+            model = kwargs['find_better_model']
+        else:
+            # there is a speed up, but we may also lose some nice numerical stability from the original sparseness
+            model = binomial(2 + (prec - 1)*f.total_degree(), 2) < 2*len(list(f**(prec-1)))
         cp1, F1 = controlledreduction(f,
                                       p,
                                       min_abs_precision=prec,
                                       frob_matrix=True,
-                                      threads=1
+                                      threads=1,
+                                      find_better_model=model,
                                       )
         # change ring to OK truncates precision accordingly
-        F1 = F1.change_ring(OK).change_ring(K)
+        F1 = F1.change_ring(OK)
         cp, frob_matrix = from_H1_to_H2(cp1, F1, tensor=kwargs.get('tensor', False))
         shift = 0
     elif len(Rf.gens()) == 4 and f.total_degree() in [4, 5] and f.is_homogeneous():
@@ -209,7 +359,8 @@ def compute_frob_matrix_and_cp_H2(f, p, prec, **kwargs):
         if 'find_better_model' in kwargs:
             model = kwargs['find_better_model']
         else:
-            model = binomial(3 + (prec - 1)*f.total_degree(), 3) < 6*len(list(f**(prec-1)))
+            # there is a speed up, but we may also lose some nice numerical stability from the original sparseness
+            model = binomial(3 + (prec - 1)*f.total_degree(), 3) < 4*len(list(f**(prec-1)))
         threads = kwargs.get('threads', ncpus)
         cp, frob_matrix = controlledreduction(f,
                                               p,
@@ -367,13 +518,13 @@ def crystalline_obstruction(f, p, precision, over_Qp=False, pedantic=False, **kw
           'p': 101,
           'precision': 3,
           'rank T(X_Fpbar)': 20})
-        sage: crystalline_obstruction(f=f, p=101, precision=3)
+        sage: crystalline_obstruction(f=f, p=101, precision=4)
         (19,
          {'dim Li': [1, 6, 12],
           'dim Ti': [1, 7, 12],
           'factors': [(t - 1, 1), (t - 1, 7), (t + 1, 12)],
           'p': 101,
-          'precision': 3,
+          'precision': 4,
           'rank T(X_Fpbar)': 20})
 
     Example 5.6
@@ -473,7 +624,7 @@ def crystalline_obstruction(f, p, precision, over_Qp=False, pedantic=False, **kw
         max_degree = max(elt.degree() for elt, _ in tate_factor)
         if max_degree > precision - 1:
             warnings.warn('Precision is very likely too low to correctly compute the Tate classes at this prime')
-    factor_i, dim_Ti, _, _, dim_Li, _ = upper_bound_tate(cp, frob_matrix, precision, over_Qp=over_Qp, pedantic=pedantic, minors=False)
+    factor_i, dim_Ti, _, dim_Li = upper_bound_tate(cp, frob_matrix, precision, over_Qp=over_Qp, pedantic=pedantic)
     res = {}
     res['precision'] = precision
     res['p'] = p
@@ -546,33 +697,32 @@ def tate_factor_Zp(cyc_factor):
 
 
 
-def upper_bound_tate(cp, frob_matrix, precision, over_Qp=False, pedantic=True, minors=False):
+def upper_bound_tate(cp, frob_matrix, precision, over_Qp=False, pedantic=True):
     """
     Return a upper bound for Tate classes over characteristic 0
     TODO: improove documentation
     """
     p = cp.list()[-1].prime_factors()[0]
     # it would be nice to use QpLF
-    K = Qp(p, prec=precision+10)
     OK = ZpCA(p, prec=precision)
 
     # adjust precision
-    frob_matrix = matrix(OK, frob_matrix).change_ring(K)
+    frob_matrix = matrix(OK, frob_matrix)
 
     # get the p-adic eigenvalues
     _, _, cyc_factorization = rank_fieldextension(cp)
 
-    # hacky
-    #print(val)
+    # a bit hacky
     val = [min(elt.valuation() for elt in col) for col in frob_matrix.columns()]
     projection_cols = frob_matrix.ncols() - val.index(0)
     assert set(val[-projection_cols:]) == {0}
     # P1 = | zero matrix |
     #      | Identity    |
     P1 = zero_matrix(frob_matrix.ncols()-projection_cols, projection_cols).stack(identity_matrix(projection_cols))
-    # for the purpose of computing the rank on a projection
-    # we want to focus on the first columns
-    # thus, we reverse the order of rows and columns
+    # computing a kernel, either via smith form or howell form
+    # involves some kind of gauss elimination,
+    # and thus having the columns with lowest valuation first improves
+    # the numerical stability of the algorithms
     P1.reverse_rows_and_columns()
     frob_matrix.reverse_rows_and_columns()
 
@@ -585,50 +735,19 @@ def upper_bound_tate(cp, frob_matrix, precision, over_Qp=False, pedantic=True, m
         else:
             return frob_matrix * frob_power(k-1)
 
-    def minors_valuation(M, rank):
-        # consider using smith form for minors
-        if not minors:
-            return None
-        if rank == min(M.ncols(), M.nrows()):
-            return +Infinity
-        elif rank == 0:
-            # avoiding bug for 0 matrices
-            return min([elt.valuation() for elt in M.list()])
-        else:
-            return min([elt.valuation() for elt in M.minors(rank + 1)])
-
-    def padic_right_kernel_matrix(M):
-        d, _, v = M.smith_form(exact=False, integral=True)
-        basis = []
-        val = precision
-        for i in range(M.ncols()):
-            if d[i, i] != 0:
-                val = min(val, d[i ,i].precision_absolute())
-            if i >= M.nrows() or d[i, i] == 0:
-                basis.append( v.column(i) )
-        # I don't understand the -1
-        return matrix(ZpCA(p, prec=precision-1), basis).change_ring(K)
 
 
-    def padic_rank(M):
-        return sum(1 if elt != 0 else 0 for elt in M.smith_form(exact=False, integral=True, transformation=False).diagonal())
 
-
-    T = matrix(K, 0, frob_matrix.ncols())
     factor_i = []
     dim_Ti = []
     obsi = []
-    obsi_val = []
     dim_Li =[]
-    dim_Li_val = []
     for cyc_fac, cyc_exp in cyc_factorization:
         factor_i.append((cyc_fac, cyc_exp))
-        Ti = matrix(K, 0, frob_matrix.ncols())
+        Ti = matrix(0, frob_matrix.ncols())
         obsij = []
-        obsij_val = []
         dim_Tij = []
         dim_Lij = []
-        dim_Lij_val = []
         for fac, exp in tate_factor_Zp(cyc_fac):
             # the rows of Tij are a basis for Tij
             # the 'computed' argument avoids echelonizing the kernel basis
@@ -638,50 +757,50 @@ def upper_bound_tate(cp, frob_matrix, precision, over_Qp=False, pedantic=True, m
             # computing the right kernel with smith form
             # howell form or strong echelon could also be good options
             Tij = padic_right_kernel_matrix(fac(frob_matrix))
-            assert Tij.nrows() == fac.degree()*exp*cyc_exp, "We are missing some eigenvalues, increasing the precision should solve this"
+            if Tij.nrows() != fac.degree()*exp*cyc_exp:
+                raise PrecisionError("Number of eigenvectors (%d) doesn't match the number of eigenvalues (%d), increasing  precision should solve this" % (Tij.nrows(), fac.degree()*exp*cyc_exp))
             if over_Qp:
                 dim_Tij.append(Tij.nrows())
                 obs_map = Tij*P1
                 rank_obs_ij = obs_map.rank()
                 obsij.append(rank_obs_ij)
-                obsij_val.append(minors_valuation(obs_map, rank_obs_ij))
-                Lijmatrix = matrix(K, Tij.nrows(), 0)
+                Lijmatrix = matrix(Tij.base_ring(), Tij.nrows(), 0)
                 for ell in range(fac.degree()):
                     Lijmatrix = Lijmatrix.augment(Tij*frob_power(ell).transpose()*P1)
                 # Lij = right_kernel(K) subspace of Tij that is invariant under Frob and unobstructed
                 Krank = Lijmatrix.rank()
                 dim_Lij.append(Tij.nrows() - Krank)
-                dim_Lij_val.append(minors_valuation(Lijmatrix, Krank))
-                assert dim_Lij[-1] % fac.degree() == 0
+                if dim_Lij[-1] % fac.degree() != 0:
+                    old_dim = dim_Li[-1]
+                    deg = fac.degree()
+                    new_dim = dim_Li[-1] = deg * (old_dim // deg)
+                    if pedantic:
+                        warnings.warn("rounding dimension of Li from %d to %d for factor = %s" % (old_dim, new_dim, fac))
 
             Ti = Ti.stack(Tij)
-        T = T.stack(Ti)
+
         if over_Qp:
             dim_Ti.append(dim_Tij)
             obsi.append(obsij)
-            obsi_val.append(obsij_val)
             dim_Li.append(dim_Lij)
-            dim_Li_val.append(dim_Lij_val)
         else:
             obs_map = Ti*P1
-            assert Ti.nrows() == cyc_fac.degree()*cyc_exp
+            if Ti.nrows() != cyc_fac.degree()*cyc_exp:
+                raise PrecisionError("Number of eigenvectors (%d) doesn't match the number of eigenvalues (%d), increasing  precision should solve this" % (Tij.nrows(), cyc_fac.degree()*cyc_exp))
             dim_Ti.append(Ti.nrows())
             rank_obs_i = padic_rank(obs_map)
-            obsi.append(rank_obs_i)
-            obsi_val.append(minors_valuation(obs_map, rank_obs_i))
-            Limatrix = matrix(K, Ti.nrows(), 0)
+            obsi.append(Ti.nrows() - rank_obs_i)
+            Limatrix = matrix(Ti.base_ring(), Ti.nrows(), 0)
             for ell in range(0,cyc_fac.degree()):
                 Limatrix = Limatrix.augment(Ti*frob_power(ell).transpose()*P1)
+            #print(Limatrix.smith_form(exact=False, integral=True, transformation=False).diagonal())
             # Li = right_kernel(K) subspace of Tij that is invariant under Frob and unobstructed
             Krank = padic_rank(Limatrix)
             dim_Li.append(Ti.nrows() - Krank)
-            dim_Li_val.append(minors_valuation(Limatrix, Krank))
             if dim_Li[-1] % cyc_fac.degree()  != 0:
                 old_dim = dim_Li[-1]
                 deg = cyc_fac.degree()
                 new_dim = dim_Li[-1] = deg * (old_dim // deg)
                 if pedantic:
                     warnings.warn("rounding dimension of Li from %d to %d for cyc_factor = %s" % (old_dim, new_dim, cyc_fac))
-    assert T.nrows() == sum(fac.degree()*exp for fac, exp in cyc_factorization)
-
-    return factor_i, dim_Ti, obsi, obsi_val, dim_Li, dim_Li_val
+    return factor_i, dim_Ti, obsi, dim_Li,
