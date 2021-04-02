@@ -26,7 +26,7 @@ from pycontrolledreduction import controlledreduction
 
 
 # cache calls to controlledreduction
-#controlledreduction = cached_function(controlledreduction)
+controlledreduction = cached_function(controlledreduction)
 
 
 ## linear algebra over Z_p
