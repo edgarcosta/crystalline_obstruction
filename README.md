@@ -106,6 +106,28 @@ sage: crystalline_obstruction(f, p=31, precision=3) # bounding dim Pic
   'p': 31,
   'precision': 3,
   'rank T(X_Fpbar)': 3})
+
+```
+
+## Example 5.4
+```
+sage: f=ZZ['x,y,z']('x^3*z+2*x^2*z^2-x*z^3-y^4')
+sage: crystalline_obstruction(f,p=43,precision=4,tensor=True)
+(9,
+ {'precision': 4,
+  'p': 43,
+  'rank T(X_Fpbar)': 18,
+  'factors': [(t + 1, 4), (t - 1, 6), (t^2 + 1, 4)],
+  'dim Ti': [4, 6, 8],
+  'dim Li': [2, 3, 4]})
+sage: crystalline_obstruction(f,p=43,precision=4,tensor=False)
+(5,
+ {'precision': 4,
+  'p': 43,
+  'rank T(X_Fpbar)': 7,
+  'factors': [(t + 1, 2), (t - 1, 3), (t^2 + 1, 1)],
+  'dim Ti': [2, 3, 2],
+  'dim Li': [1, 2, 2]})
 ```
 ### Product of 3 elliptic curves over x^3 - 3*x - 1
 ```
@@ -142,8 +164,9 @@ sage: crystalline_obstruction(f=f, p=5003, precision=3, tensor=True) # bounding 
   'rank T(X_Fpbar)': 18})
 ```
 
+
 ## Quartic surfaces
-### Example 5.5
+### Example 5.6
 ```
 sage: f = ZZ['x,y,z,w']("x^4 + y^4 + z^4 + w^4 + 101^3*x*y*z*w")
 sage: crystalline_obstruction(f, p=101, precision=3)
@@ -163,7 +186,7 @@ sage: crystalline_obstruction(f=f, p=101, precision=4)
   'precision': 4,
   'rank T(X_Fpbar)': 20})
 ```
-### Example 5.6
+### Example 5.7
 ```
 sage: f = ZZ['x,y,z,w']("y^4 - x^3*z + y*z^3 + z*w^3 + w^4")
 sage: crystalline_obstruction(f=f, p=89, precision=3)
@@ -175,7 +198,7 @@ sage: crystalline_obstruction(f=f, p=89, precision=3)
   'precision': 3,
   'rank T(X_Fpbar)': 10})
 ```
-### Example 5.7
+### Example 5.8
 ```
 sage: f = ZZ['x,y,z,w']("x^4 + 2*y^4 + 2*y*z^3 + 3*z^4 - 2*x^3*w- 2*y*w^3")
 sage: crystalline_obstruction(f=f, p=67, precision=3)
@@ -194,7 +217,7 @@ It takes about 1 day of CPU time to compute the zeta function of a quintic surfa
 We may still demonstrate the functionality of `crystalline_obstruction` by providing the
 characteristic polynomial and an approximation of the Frobenius matrix.
 
-### Example 5.9
+### Example 5.10
 ```
 sage: # f doesn't play a role
 sage: f =  ZZ['x,y,z,w']('10*x^4*y + 3*x^4*w - 10*x*w^4 + 3*y^4*w - 3*z^5 - 23*x^3*y*z')
